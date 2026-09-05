@@ -10,7 +10,17 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.luckyyoustudio.luckybaby",
       "appleTeamId": "JU4P42JZ54",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "幸运宝贝",
+        "CFBundleLocalizations": [
+          "zh-Hans",
+          "en"
+        ],
+        "CFBundleDevelopmentRegion": "zh-Hans"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -40,7 +50,8 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"

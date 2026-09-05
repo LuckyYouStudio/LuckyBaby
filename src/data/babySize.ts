@@ -1,0 +1,45 @@
+// 每周宝宝大小类比 + 一句话（面向全家，不做医学结论）
+export const BABY_WEEKS: Record<number, { like: string; length: string; note: string }> = {
+  4: { like: '罂粟籽', length: '≈ 1 mm', note: '胚胎刚着床，开始形成胎盘。' },
+  5: { like: '芝麻', length: '≈ 2 mm', note: '心脏开始搏动的前奏。' },
+  6: { like: '扁豆', length: '≈ 5 mm', note: 'B 超可能已经看到胎心。' },
+  7: { like: '蓝莓', length: '≈ 1 cm', note: '手脚的雏形长出来了。' },
+  8: { like: '树莓', length: '≈ 1.6 cm', note: '手指脚趾开始分开。' },
+  9: { like: '樱桃', length: '≈ 2.3 cm', note: '尾巴消失，开始像个小人。' },
+  10: { like: '金桔', length: '≈ 3.1 cm', note: '所有重要器官都开始工作。' },
+  11: { like: '无花果', length: '≈ 4.1 cm', note: '会踢腿伸展了，只是你还感觉不到。' },
+  12: { like: '青柠', length: '≈ 5.4 cm', note: 'NT 检查的窗口期。' },
+  13: { like: '豌豆荚', length: '≈ 7.4 cm', note: '进入孕中期，孕吐通常会减轻。' },
+  14: { like: '柠檬', length: '≈ 8.7 cm', note: '能做表情了。' },
+  15: { like: '苹果', length: '≈ 10 cm', note: '开始长胎毛。' },
+  16: { like: '牛油果', length: '≈ 11.6 cm', note: '可能感受到第一次胎动。' },
+  17: { like: '梨', length: '≈ 13 cm', note: '开始有脂肪，骨骼变硬。' },
+  18: { like: '红薯', length: '≈ 14 cm', note: '能听到外面的声音，爸爸可以说话了。' },
+  19: { like: '芒果', length: '≈ 15 cm', note: '皮肤上覆盖胎脂。' },
+  20: { like: '香蕉', length: '≈ 16.5 cm', note: '孕期过半。' },
+  21: { like: '胡萝卜', length: '≈ 26.7 cm', note: '开始吞咽羊水，练习消化。' },
+  22: { like: '木瓜', length: '≈ 27.8 cm', note: '大排畸的窗口期。' },
+  23: { like: '葡萄柚', length: '≈ 28.9 cm', note: '眼睛快速发育。' },
+  24: { like: '玉米', length: '≈ 30 cm', note: '肺部开始产生表面活性物质。' },
+  25: { like: '白萝卜', length: '≈ 34.6 cm', note: '开始有睡眠和清醒的节律。' },
+  26: { like: '大葱', length: '≈ 35.6 cm', note: '眼睛可以睁开了。' },
+  27: { like: '花椰菜', length: '≈ 36.6 cm', note: '进入孕晚期。' },
+  28: { like: '茄子', length: '≈ 37.6 cm', note: '开始数胎动。' },
+  29: { like: '南瓜', length: '≈ 38.6 cm', note: '骨骼继续变硬。' },
+  30: { like: '卷心菜', length: '≈ 39.9 cm', note: '开始转成头位。' },
+  31: { like: '椰子', length: '≈ 41.1 cm', note: '五感都在工作。' },
+  32: { like: '大白菜', length: '≈ 42.4 cm', note: 'B 超看胎位和羊水。' },
+  33: { like: '菠萝', length: '≈ 43.7 cm', note: '免疫系统在发育。' },
+  34: { like: '哈密瓜', length: '≈ 45 cm', note: '指甲长到指尖。' },
+  35: { like: '蜜瓜', length: '≈ 46.2 cm', note: '每周胎心监护开始。' },
+  36: { like: '生菜', length: '≈ 47.4 cm', note: '入盆前后。' },
+  37: { like: '冬瓜', length: '≈ 48.6 cm', note: '足月了，随时可能发动。' },
+  38: { like: '韭葱', length: '≈ 49.8 cm', note: '准备好待产包。' },
+  39: { like: '小西瓜', length: '≈ 50.7 cm', note: '静静等待。' },
+  40: { like: '西瓜', length: '≈ 51.2 cm', note: '预产期到了。' },
+};
+
+export function babyOfWeek(week: number) {
+  const w = Math.max(4, Math.min(40, week));
+  return BABY_WEEKS[w] ?? BABY_WEEKS[40];
+}

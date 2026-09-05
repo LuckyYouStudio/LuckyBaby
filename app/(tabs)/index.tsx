@@ -1,0 +1,130 @@
+import React from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDerived, useStore } from '../../src/store/store';
+import { Avatar, Body, Body2, Button, Caption, Card, H1, H2, Pill, Row, Screen, Section } from '../../src/components/ui';
+import { Feed } from '../../src/components/Feed';
+import { colors, roleColor, space } from '../../src/theme';
+import { babyOfWeek } from '../../src/data/babySize';
+import { fmtDate, fmtRelative, trimester } from '../../src/lib/pregnancy';
+
+export default function Today() {
+  const { state, dispatch } = useStore();
+  const { me, g, today, canSee, byId } = useDerived();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  if (!me) return null;
+
+  const baby = babyOfWeek(g.week);
+  const upcoming = state.checkups
+    .filter((c) => !c.done && c.date && c.date >= today && (me.role === 'family' || canSee(c.visibility)))
+    .sort((a, b) => (a.date! < b.date! ? -1 : 1))
+    .slice(0, 2);
+  const dueSupplements = state.supplements.filter((s) => s.active && g.week >= s.weekFrom && g.week <= s.weekTo && canSee(s.visibility));
+  const taken = (id: string) => state.supplementLogs.find((l) => l.supplementId === id && l.date === today);
+  const progress = Math.max(0, Math.min(1, g.totalDays / 280));
+  const nick = state.pregnancy.babyNickname ?? '宝宝';
+
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: insets.top + 12, paddingBottom: 40 }}>
+        <Row style={{ justifyContent: 'space-between', marginBottom: space.md }}>
+          <View>
+            <Caption>{me.role === 'mom' ? `你好，${me.name}` : `${state.pregnancy.momName} 的孕期 · 你是${roleColor[me.role].label}`}</Caption>
+            <H1>
+              孕 {g.week} 周 {g.day} 天
+            </H1>
+          </View>
+          <Avatar name={me.name} role={me.role} size={40} />
+        </Row>
+
+        <View style={{ height: 6, backgroundColor: colors.paper2, borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+          <View style={{ width: `${progress * 100}%`, height: 6, backgroundColor: colors.pine }} />
+        </View>
+        <Row style={{ justifyContent: 'space-between', marginBottom: space.lg }}>
+          <Caption>孕{['早', '中', '晚'][trimester(g.week) - 1]}期</Caption>
+          <Caption>距预产期 {g.daysLeft} 天 · {fmtDate(state.pregnancy.dueDate)}</Caption>
+        </Row>
+
+        <Card style={{ backgroundColor: colors.pineSoft, borderColor: colors.pineSoft }}>
+          <Caption style={{ color: colors.pine }}>本周的{nick}</Caption>
+          <H2 style={{ color: colors.pine, marginTop: 2 }}>像一颗{baby.like}</H2>
+          <Body2 style={{ color: colors.pine, marginTop: 4 }}>
+            {baby.length} · {baby.note}
+          </Body2>
+        </Card>
+
+        {me.role !== 'family' && <Section title="今天要吃" right={<Pressable onPress={() => router.push('/meds')}><Caption style={{ color: colors.pine }}>全部</Caption></Pressable>}>
+          {dueSupplements.length === 0 ? (
+            <Body2>本周没有需要吃的补充剂。</Body2>
+          ) : (
+            <Card style={{ padding: 0 }}>
+              {dueSupplements.map((s, i) => {
+                const log = taken(s.id);
+                const who = log ? byId(log.byId) : undefined;
+                return (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => dispatch({ type: 'toggleSupplementLog', supplementId: s.id, date: today, byId: me.id })}
+                    style={{ flexDirection: 'row', alignItems: 'center', padding: space.md, paddingHorizontal: space.lg, borderTopWidth: i ? 1 : 0, borderTopColor: colors.line }}
+                  >
+                    <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: log ? colors.pine : colors.line, backgroundColor: log ? colors.pine : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                      {log && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>✓</Text>}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Body style={log ? { color: colors.ink3, textDecorationLine: 'line-through' } : undefined}>
+                        {s.name} · {s.dose}
+                      </Body>
+                      <Caption>{log && who ? `${who.name} 记于 ${log.at.slice(11, 16)}` : `${s.timeOfDay}${s.note ? ' · ' + s.note : ''}`}</Caption>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </Card>
+          )}
+          {me.role === 'dad' && <Caption style={{ marginTop: 6 }}>你也可以替她打卡，动态里会显示是你记的。</Caption>}
+        </Section>}
+
+        <Section title="接下来的产检" right={<Pressable onPress={() => router.push('/checkups')}><Caption style={{ color: colors.pine }}>全部</Caption></Pressable>}>
+          {upcoming.length === 0 ? (
+            <Body2>近期没有安排的产检。</Body2>
+          ) : (
+            upcoming.map((c) => {
+              const comp = c.companionId ? byId(c.companionId) : undefined;
+              return (
+                <Card key={c.id} style={{ marginBottom: space.sm }} onPress={() => router.push(`/checkup/${c.id}`)}>
+                  <Row style={{ justifyContent: 'space-between' }}>
+                    <Body style={{ fontWeight: '700' }}>{c.title}</Body>
+                    <Pill text={fmtRelative(c.date!)} tone={c.date === today ? 'apricot' : 'grey'} />
+                  </Row>
+                  <Body2 style={{ marginTop: 2 }}>
+                    {fmtDate(c.date)} · 孕 {c.weekFrom}
+                    {c.weekTo !== c.weekFrom ? `–${c.weekTo}` : ''} 周{c.hospital ? ' · ' + c.hospital : ''}
+                  </Body2>
+                  {!!c.notes && <Caption style={{ marginTop: 4, color: colors.warn }}>{c.notes}</Caption>}
+                  <Row style={{ marginTop: 8 }}>
+                    {comp ? (
+                      <>
+                        <Avatar name={comp.name} role={comp.role} size={22} />
+                        <Caption>{comp.name} 陪同</Caption>
+                      </>
+                    ) : (
+                      <Caption>还没有人说要陪</Caption>
+                    )}
+                  </Row>
+                </Card>
+              );
+            })
+          )}
+        </Section>
+
+        <Section title="家里的动态" right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>全部</Caption></Pressable>}>
+          <Feed limit={3} />
+        </Section>
+
+        <Button title="记一笔" onPress={() => router.push('/log/new')} style={{ marginTop: space.xl }} />
+      </ScrollView>
+    </Screen>
+  );
+}

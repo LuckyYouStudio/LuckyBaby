@@ -128,7 +128,7 @@ export default function Onboarding() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: space.xl, paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
           <Row style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-            <Caption>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
+            <Caption style={{ flex: 1, marginRight: 8 }} numberOfLines={1}>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
             <LangToggle compact />
           </Row>
           <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? tr('你好，准妈妈') : tr('加入她的孕期')}</H1>

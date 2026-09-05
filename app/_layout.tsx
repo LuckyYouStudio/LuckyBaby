@@ -23,8 +23,8 @@ function Gate() {
   useEffect(() => {
     if (!ready) return;
     const inOnboarding = ['onboarding', 'demo', 'join', 'scan', 'auth', 'consent'].includes(segments[0]);
-    if (!state.consentAt && segments[0] !== 'consent') { router.replace('/consent' as never); return; }
-    if (state.consentAt && segments[0] === 'consent') { router.replace(state.onboarded ? '/' : ('/onboarding' as never)); return; }
+    if (!state.consentAt) { if (segments[0] !== 'consent') router.replace('/consent' as never); return; }
+    if (segments[0] === 'consent') { router.replace(state.onboarded ? '/' : ('/onboarding' as never)); return; }
     if (!state.onboarded && !inOnboarding) router.replace('/onboarding');
     if (state.onboarded && inOnboarding) router.replace('/');
   }, [ready, state.onboarded, state.consentAt, segments]);

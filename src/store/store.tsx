@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Supplement, SupplementLog, Visibility } from '../data/types';
 import { CHECKUP_TEMPLATES } from '../data/schedule';
 import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { dateOfWeek, gestation, today, uid } from '../lib/pregnancy';
 import { demoState } from './demo';
+import { cloudEnabled, ensureSession } from '../lib/supabase';
+import { myFamilyRemote, pullAll, pushDiff, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 
 const KEY = 'luckybaby.state.v1';
 
@@ -19,11 +21,16 @@ export const emptyState: AppState = {
   supplementLogs: [],
   logs: [],
   activities: [],
+  cloud: null,
 };
+
+export type SyncStatus = 'local' | 'syncing' | 'synced' | 'offline';
 
 type Action =
   | { type: 'hydrate'; state: AppState }
-  | { type: 'setup'; pregnancy: Pregnancy; me: Member }
+  | { type: 'setup'; pregnancy: Pregnancy; me: Member; familyCode?: string; cloud?: CloudInfo }
+  | { type: 'joinFamily'; pregnancy: Pregnancy; me: Member; familyCode: string; cloud: CloudInfo; slices: RemoteSlices }
+  | { type: 'applyRemote'; slices: RemoteSlices; lastSynced: AppState }
   | { type: 'reset' }
   | { type: 'seedDemo' }
   | { type: 'addMember'; member: Member }
@@ -44,22 +51,19 @@ function act(byId: string, kind: Activity['kind'], text: string, visibility: Vis
 }
 
 function seedFromTemplates(dueDate: string): { checkups: Checkup[]; supplements: Supplement[] } {
-  const checkups: Checkup[] = CHECKUP_TEMPLATES.map((t) => ({
-    ...t,
-    id: uid(),
-    date: dateOfWeek(dueDate, t.weekFrom),
-    done: false,
-    metrics: [],
-    visibility: 'partner',
-    fromTemplate: true,
-  }));
-  const supplements: Supplement[] = SUPPLEMENT_TEMPLATES.map((t) => ({
-    ...t,
-    id: uid(),
-    active: true,
-    visibility: 'partner',
-  }));
+  const checkups: Checkup[] = CHECKUP_TEMPLATES.map((t) => ({ ...t, id: uid(), date: dateOfWeek(dueDate, t.weekFrom), done: false, metrics: [], visibility: 'partner', fromTemplate: true }));
+  const supplements: Supplement[] = SUPPLEMENT_TEMPLATES.map((t) => ({ ...t, id: uid(), active: true, visibility: 'partner' }));
   return { checkups, supplements };
+}
+
+/** 服务端数据为底，保留本地尚未同步的改动 */
+function mergeSlice<T extends { id: string }>(server: T[], local: T[], synced: T[]): T[] {
+  const syncedById = new Map(synced.map((x) => [x.id, JSON.stringify(x)]));
+  const localById = new Map(local.map((x) => [x.id, x]));
+  const out = new Map(server.map((x) => [x.id, x]));
+  for (const x of local) if (syncedById.get(x.id) !== JSON.stringify(x)) out.set(x.id, x); // 本地新增或修改
+  for (const s of synced) if (!localById.has(s.id)) out.delete(s.id); // 本地删除
+  return [...out.values()];
 }
 
 function reducer(s: AppState, a: Action): AppState {
@@ -72,25 +76,27 @@ function reducer(s: AppState, a: Action): AppState {
       return demoState();
     case 'setup': {
       const seeded = seedFromTemplates(a.pregnancy.dueDate);
-      const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+      const code = a.familyCode ?? Math.random().toString(36).slice(2, 8).toUpperCase();
       const first = act(a.me.id, 'system', `${a.me.name} 创建了家庭，预产期 ${a.pregnancy.dueDate}`);
+      return { ...emptyState, onboarded: true, meId: a.me.id, familyCode: code, pregnancy: a.pregnancy, members: [a.me], ...seeded, activities: [first], cloud: a.cloud ?? null };
+    }
+    case 'joinFamily':
+      return { ...emptyState, onboarded: true, meId: a.me.id, familyCode: a.familyCode, pregnancy: a.pregnancy, cloud: a.cloud, ...a.slices, members: a.slices.members.some((m) => m.id === a.me.id) ? a.slices.members : [...a.slices.members, a.me] };
+    case 'applyRemote': {
+      const L = a.lastSynced;
+      const activities = mergeSlice(a.slices.activities, s.activities, L.activities).sort((x, y) => (x.at < y.at ? 1 : -1));
       return {
-        ...emptyState,
-        onboarded: true,
-        meId: a.me.id,
-        familyCode: code,
-        pregnancy: a.pregnancy,
-        members: [a.me],
-        ...seeded,
-        activities: [first],
+        ...s,
+        members: mergeSlice(a.slices.members, s.members, L.members),
+        checkups: mergeSlice(a.slices.checkups, s.checkups, L.checkups),
+        supplements: mergeSlice(a.slices.supplements, s.supplements, L.supplements),
+        supplementLogs: mergeSlice(a.slices.supplementLogs, s.supplementLogs, L.supplementLogs),
+        logs: mergeSlice(a.slices.logs, s.logs, L.logs),
+        activities,
       };
     }
     case 'addMember':
-      return {
-        ...s,
-        members: [...s.members, a.member],
-        activities: [act(a.member.id, 'family', `${a.member.name} 加入了家庭`), ...s.activities],
-      };
+      return { ...s, members: [...s.members, a.member], activities: [act(a.member.id, 'family', `${a.member.name} 加入了家庭`), ...s.activities] };
     case 'removeMember':
       return { ...s, members: s.members.filter((m) => m.id !== a.id) };
     case 'switchMe':
@@ -124,19 +130,9 @@ function reducer(s: AppState, a: Action): AppState {
     case 'deleteLog':
       return { ...s, logs: s.logs.filter((l) => l.id !== a.id) };
     case 'like':
-      return {
-        ...s,
-        activities: s.activities.map((x) =>
-          x.id !== a.activityId ? x : { ...x, likes: x.likes.includes(a.byId) ? x.likes.filter((i) => i !== a.byId) : [...x.likes, a.byId] },
-        ),
-      };
+      return { ...s, activities: s.activities.map((x) => (x.id !== a.activityId ? x : { ...x, likes: x.likes.includes(a.byId) ? x.likes.filter((i) => i !== a.byId) : [...x.likes, a.byId] })) };
     case 'comment':
-      return {
-        ...s,
-        activities: s.activities.map((x) =>
-          x.id !== a.activityId ? x : { ...x, comments: [...x.comments, { id: uid(), byId: a.byId, text: a.text, at: new Date().toISOString() }] },
-        ),
-      };
+      return { ...s, activities: s.activities.map((x) => (x.id !== a.activityId ? x : { ...x, comments: [...x.comments, { id: uid(), byId: a.byId, text: a.text, at: new Date().toISOString() }] })) };
     case 'post':
       return { ...s, activities: [act(a.byId, 'log', a.text, 'family'), ...s.activities] };
     default:
@@ -144,31 +140,96 @@ function reducer(s: AppState, a: Action): AppState {
   }
 }
 
-const Ctx = createContext<{ state: AppState; dispatch: React.Dispatch<Action>; ready: boolean } | null>(null);
+const Ctx = createContext<{ state: AppState; dispatch: React.Dispatch<Action>; ready: boolean; sync: SyncStatus; refresh: () => void } | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, emptyState);
-  const [ready, setReady] = React.useState(false);
+  const [ready, setReady] = useState(false);
+  const [sync, setSync] = useState<SyncStatus>('local');
   const hydrated = useRef(false);
+  const lastSynced = useRef<AppState>(emptyState); // 上次与云端一致的快照
+  const pushing = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
+  // 1. 从本地恢复；若本地为空但云端有家庭（换设备/重装），拉回来
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((raw) => {
-        if (raw) dispatch({ type: 'hydrate', state: { ...emptyState, ...JSON.parse(raw) } });
-      })
-      .catch(() => {})
-      .finally(() => {
-        hydrated.current = true;
-        setReady(true);
-      });
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(KEY);
+        if (raw) {
+          const st = { ...emptyState, ...JSON.parse(raw) } as AppState;
+          dispatch({ type: 'hydrate', state: st });
+          if (st.cloud) lastSynced.current = st;
+        } else if (cloudEnabled) {
+          const userId = await ensureSession();
+          const mine = await myFamilyRemote();
+          if (mine) {
+            const slices = await pullAll(mine.familyId);
+            const me = slices.members.find((m) => m.id === mine.memberId)!;
+            dispatch({ type: 'joinFamily', pregnancy: mine.pregnancy, me, familyCode: mine.inviteCode, cloud: { familyId: mine.familyId, userId }, slices });
+          }
+        }
+      } catch {}
+      hydrated.current = true;
+      setReady(true);
+    })();
   }, []);
 
+  // 2. 持久化
   useEffect(() => {
     if (!hydrated.current) return;
     AsyncStorage.setItem(KEY, JSON.stringify(state)).catch(() => {});
   }, [state]);
 
-  const value = useMemo(() => ({ state, dispatch, ready }), [state, ready]);
+  // 3. 推送本地改动
+  const push = async () => {
+    const st = stateRef.current;
+    if (!st.cloud || pushing.current) return;
+    if (st === lastSynced.current) return;
+    pushing.current = true;
+    setSync('syncing');
+    try {
+      await pushDiff(lastSynced.current, st, st.cloud.familyId);
+      lastSynced.current = st;
+      setSync('synced');
+    } catch {
+      setSync('offline');
+    } finally {
+      pushing.current = false;
+      if (stateRef.current !== lastSynced.current && stateRef.current.cloud) setTimeout(push, 3000);
+    }
+  };
+  useEffect(() => {
+    if (!hydrated.current || !state.cloud) return;
+    const t = setTimeout(push, 400);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  // 4. 拉取远端改动（实时 + 首次）
+  const pull = async () => {
+    const st = stateRef.current;
+    if (!st.cloud) return;
+    try {
+      const slices = await pullAll(st.cloud.familyId);
+      dispatch({ type: 'applyRemote', slices, lastSynced: lastSynced.current });
+      // 合并后的状态在下一轮 effect 里成为 stateRef；把 lastSynced 推进到"服务端快照 + 本地未同步改动"
+      setTimeout(() => {
+        const merged = stateRef.current;
+        lastSynced.current = { ...merged, ...slices } as AppState;
+        setSync('synced');
+      }, 0);
+    } catch {
+      setSync('offline');
+    }
+  };
+  useEffect(() => {
+    if (!state.cloud) { setSync('local'); return; }
+    pull();
+    return subscribe(state.cloud.familyId, pull);
+  }, [state.cloud?.familyId]);
+
+  const value = useMemo(() => ({ state, dispatch, ready, sync, refresh: pull }), [state, ready, sync]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

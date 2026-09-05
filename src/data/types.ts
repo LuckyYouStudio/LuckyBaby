@@ -95,4 +95,6 @@ export interface AppState {
   supplementLogs: SupplementLog[];
   logs: DailyLog[];
   activities: Activity[];
+  /** 云同步信息；null 为纯本地 */
+  cloud: { familyId: string; userId: string } | null;
 }

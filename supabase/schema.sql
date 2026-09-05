@@ -142,3 +142,73 @@ create policy "write activities" on activities for insert with check (my_role(fa
 create policy "like activities" on activities for update using (my_role(family_id) is not null);
 create policy "read comments" on comments for select using (exists (select 1 from activities a where a.id = activity_id and can_see(a.family_id, a.visibility)));
 create policy "write comments" on comments for insert with check (exists (select 1 from activities a where a.id = activity_id and can_see(a.family_id, a.visibility)));
+
+-- ---------------------------------------------------------------------------
+-- M1 补充：建家庭 / 邀请码加入 / 取回我的家庭，以及 Realtime
+-- ---------------------------------------------------------------------------
+
+alter table families add column if not exists created_by uuid references auth.users(id);
+alter table activities alter column ref_id type text;
+
+create or replace function gen_invite_code() returns text language sql volatile as $$
+  select upper(substr(translate(encode(gen_random_bytes(6), 'base64'), '+/=0O1Il', 'ABCDEFGH'), 1, 6))
+$$;
+
+-- 准妈妈创建家庭（SECURITY DEFINER：此时她还不是任何家庭成员，走不了 RLS）
+create or replace function create_family(
+  p_due_date date, p_lmp date, p_mom_name text, p_baby_nickname text, p_member_id uuid default gen_random_uuid()
+) returns json language plpgsql security definer set search_path = public as $$
+declare
+  fid uuid; code text;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  loop
+    code := gen_invite_code();
+    exit when not exists (select 1 from families where invite_code = code);
+  end loop;
+  insert into families (invite_code, due_date, lmp, mom_name, baby_nickname, created_by)
+    values (code, p_due_date, p_lmp, p_mom_name, p_baby_nickname, auth.uid()) returning id into fid;
+  insert into members (id, family_id, user_id, name, role) values (p_member_id, fid, auth.uid(), p_mom_name, 'mom');
+  return json_build_object('family_id', fid, 'invite_code', code, 'member_id', p_member_id);
+end $$;
+
+-- 用邀请码加入。一个家庭只能有一个准爸爸；同一账号不能重复加入
+create or replace function join_family(
+  p_code text, p_name text, p_role member_role, p_relation text default null, p_member_id uuid default gen_random_uuid()
+) returns json language plpgsql security definer set search_path = public as $$
+declare
+  f families%rowtype;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if p_role = 'mom' then raise exception 'invalid role'; end if;
+  select * into f from families where invite_code = upper(trim(p_code));
+  if not found then raise exception 'invite code not found'; end if;
+  if exists (select 1 from members where family_id = f.id and user_id = auth.uid()) then
+    raise exception 'already a member';
+  end if;
+  if p_role = 'dad' and exists (select 1 from members where family_id = f.id and role = 'dad') then
+    raise exception 'dad already exists';
+  end if;
+  insert into members (id, family_id, user_id, name, role, relation)
+    values (p_member_id, f.id, auth.uid(), p_name, p_role, p_relation);
+  insert into activities (family_id, by_id, kind, text, visibility)
+    values (f.id, p_member_id, 'family', p_name || ' 加入了家庭', 'family');
+  return json_build_object('family_id', f.id, 'member_id', p_member_id, 'family', row_to_json(f));
+end $$;
+
+-- 重新登录/换设备时取回我的家庭
+create or replace function my_family() returns json language sql stable security definer set search_path = public as $$
+  select json_build_object('family', row_to_json(f), 'member_id', m.id)
+  from members m join families f on f.id = m.family_id
+  where m.user_id = auth.uid() limit 1
+$$;
+
+grant execute on function create_family(date, date, text, text, uuid) to authenticated;
+grant execute on function join_family(text, text, member_role, text, uuid) to authenticated;
+grant execute on function my_family() to authenticated;
+
+-- 成员可以更新自己的称呼；准妈妈可移除成员（已有 "mom manages members"）
+create policy "member updates self" on members for update using (user_id = auth.uid());
+
+-- Realtime：家庭内任一成员改动，其他人实时收到
+alter publication supabase_realtime add table members, checkups, supplements, supplement_logs, daily_logs, activities, comments;

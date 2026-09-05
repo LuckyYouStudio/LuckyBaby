@@ -7,7 +7,7 @@ import { Feed } from '../../src/components/Feed';
 import { colors, roleColor, space } from '../../src/theme';
 
 export default function Family() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, sync, refresh } = useStore();
   const { me } = useDerived();
   const router = useRouter();
   const [draft, setDraft] = useState('');
@@ -29,9 +29,20 @@ export default function Family() {
               <Caption style={{ color: colors.pine }}>家庭邀请码</Caption>
               <Text style={{ fontSize: 26, fontWeight: '700', color: colors.pine, letterSpacing: 4, fontVariant: ['tabular-nums'] }}>{state.familyCode}</Text>
             </View>
-            {me.role === 'mom' && <Button title="邀请家人" small onPress={() => router.push('/member/new')} />}
+            {me.role === 'mom' && !state.cloud && <Button title="添加成员" small onPress={() => router.push('/member/new')} />}
           </Row>
-          <Caption style={{ color: colors.pine, marginTop: 6 }}>家人输入邀请码加入。云端同步在下一版本开放，当前版本可在本机切换身份体验各角色视角。</Caption>
+          <Caption style={{ color: colors.pine, marginTop: 6 }}>
+            {state.cloud
+              ? '把邀请码发给准爸爸和家人，他们在 App 首页选「我有邀请码」加入。'
+              : '本机模式：可以先添加成员，切换身份体验各角色视角。配置云同步后，家人凭邀请码从自己的手机加入。'}
+          </Caption>
+          {state.cloud && (
+            <Pressable onPress={refresh} style={{ marginTop: 6 }}>
+              <Caption style={{ color: sync === 'offline' ? colors.warn : colors.pine }}>
+                {sync === 'syncing' ? '同步中…' : sync === 'offline' ? '离线，改动会在恢复网络后同步 · 点此重试' : '已同步 · 点此刷新'}
+              </Caption>
+            </Pressable>
+          )}
         </Card>
 
         <Section title={`成员 · ${state.members.length}`}>
@@ -58,7 +69,7 @@ export default function Family() {
                       </Caption>
                     </View>
                   </Row>
-                  {!isMe && (
+                  {!isMe && !state.cloud && (
                     <Pressable onPress={() => dispatch({ type: 'switchMe', id: m.id })}>
                       <Caption style={{ color: colors.pine, fontWeight: '700' }}>以TA的视角看</Caption>
                     </Pressable>

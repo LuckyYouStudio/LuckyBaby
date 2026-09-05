@@ -57,6 +57,7 @@ export function demoState(): AppState {
     supplements,
     supplementLogs: logsSup,
     logs,
+    cloud: null,
     activities: [
       A(0, 7, 'm1', 'log', '记录体重 60.1 kg', 'partner'),
       A(0, 12, 'd1', 'supplement', '帮她记了一次DHA', 'partner'),

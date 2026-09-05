@@ -74,6 +74,9 @@ export function fmtTime(iso: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日 ${hh}`;
 }
 
+import * as Crypto from 'expo-crypto';
+
+/** UUID v4，与云端主键一致 */
 export function uid(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  return Crypto.randomUUID();
 }

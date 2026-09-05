@@ -17,6 +17,7 @@
   - 过渡方案已生效：准爸爸手机上的本地提醒（她到点 2 小时未记，且他的 App 已同步到这一状态）。
   - 改函数后重新部署：`supabase functions deploy nudge-partner --no-verify-jwt`；secret 用 `supabase secrets set CRON_SECRET=...`，并同步更新 cron.job 里的 header。
 - 家庭时区 `families.tz` 由建家庭的手机上报。
+- **邀请落地页** Edge Function `join`：`/functions/v1/join?code=XXXXXX&from=名字`，纯 HTML，无需登录；二维码和分享链接都指向它。已装 App 的人点“打开 App 加入”走 `luckybaby://join?code=`。上架后填 `APP_STORE_URL` 重新部署：`supabase functions deploy join --no-verify-jwt`。
 
 ## 一次性准备（需要你的 Supabase 账号）
 

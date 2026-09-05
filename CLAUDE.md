@@ -31,7 +31,8 @@ npm run ios:device      # 装到数据线连着的 iPhone（Release 包，独立
 - `src/store/`：全局 reducer + 持久化 + 派生数据（`useDerived` 含孕周与可见性判断）。
 - `src/components/ui.tsx`：通用组件；`src/theme.ts`：颜色与字号。`colors` 是可变对象，`applyTheme()` 在根布局按设置/系统切换深浅色，`fontScale` 控制字号；样式必须在渲染时读 `colors.x`，不要在模块顶层缓存。
 - `src/lib/reminders.ts` 本地提醒（产检/补充剂/准爸爸的“她还没记”）；`src/lib/photos.ts` 报告照片上传与签名链接；`src/lib/push.ts` 推送 token 登记。
-- 其他页面：`kicks` 数胎动、`contractions` 宫缩计时、`packing` 待产包、`settings` 外观与字号。
+- 其他页面：`kicks` 数胎动、`contractions` 宫缩计时、`packing` 待产包、`settings` 外观与字号、`invite` 邀请二维码/分享、`scan` 扫码加入、`join` 深链接 `luckybaby://join?code=`。
+- 邀请落地页：Edge Function `join`（`src/lib/invite.ts` 里的 INVITE_BASE）；上架后把函数里 APP_STORE_URL 填上并重新部署。
 
 ## 约定
 - 角色可见性：mom 全可见；dad 看 partner/family；family 只看 family（产检日程例外：家人可看标题/日期，不看数值和结果）。

@@ -47,7 +47,7 @@ export const en: Record<string, string> = {
   '把邀请码': 'Send the code', '发给家人。当前版本先在本机添加成员，用来体验不同角色看到的内容；云端同步在下一版本开放。': 'to family. In local mode you add members here to preview each role.',
 
   // 页面标题 / 标签
-  '产检': 'Checkups', '记一笔': 'Add entry', '数胎动': 'Kick counter', '宫缩计时': 'Contractions', '待产包': 'Hospital bag',
+  '产检': 'Checkups', '记一笔': 'Add entry', '数胎动': 'Kick counter', '宫缩计时': 'Labor timer', '待产包': 'Hospital bag',
   '今': 'T', '检': 'C', '药': 'M', '记': 'L', '家': 'F', '今天': 'Today', '用药': 'Meds', '记录': 'Log', '家庭': 'Family',
   '返回': 'Back', '取消': 'Cancel', '保存': 'Save', '删除': 'Delete', '移除': 'Remove', '开启': 'Turn on', '全部': 'All', '恢复': 'Resume', '开始': 'Start',
 
@@ -91,7 +91,7 @@ export const en: Record<string, string> = {
   // 首页
   '还好': 'Okay', '吐了': 'Threw up', '累瘫': 'Exhausted', '不舒服': 'Unwell', '今天{mood}': 'Today: {mood}', '今天怎么样？点一下就行': 'How are you today? Just tap',
   '没有拿到通知权限': 'Notifications not allowed', '可以在系统设置里给「幸运宝贝」打开通知，再回来开启。': 'Enable notifications for LuckyBaby in Settings, then come back.',
-  '你好，{name}': 'Hi, {name}', '{mom} 的孕期 · 你是{role}': '{mom}\'s pregnancy · you\'re {role}', '孕 {w} 周 {d} 天': 'Week {w}, day {d}', '早': '1st trimester', '中': '2nd trimester', '晚': '3rd trimester',
+  '你好，{name}': 'Hi, {name}', '{mom} 的孕期 · 你是{role}': '{mom}\'s pregnancy · you\'re {role}', '孕 {w} 周 {d} 天': 'Week {w}, day {d}', '孕早期': '1st trimester', '孕中期': '2nd trimester', '孕晚期': '3rd trimester',
   '距预产期 {n} 天': '{n} days to due date', '让手机提醒，不用记': 'Let your phone remind you', '产检前一晚说要不要空腹、带什么；补充剂到点提醒。': 'The night before a checkup: fasting or not, what to bring. Supplements on time.',
   '本周的{nick}': '{nick} this week', '像一颗{like}': 'About the size of a {like}', '今天要吃': 'Today\'s supplements', '本周没有需要吃的补充剂。': 'No supplements this week.', '今天 ': 'Today ',
   '你也可以替她打卡，动态里会显示是你记的。': 'You can check in for her. The feed shows it was you.', '家里的动态': 'Family feed',

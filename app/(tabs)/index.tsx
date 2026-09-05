@@ -66,7 +66,7 @@ export default function Today() {
           <View style={{ width: `${progress * 100}%`, height: 6, backgroundColor: colors.pine }} />
         </View>
         <Row style={{ justifyContent: 'space-between', marginBottom: space.lg }}>
-          <Caption>孕{[tr('早'), tr('中'), tr('晚')][trimester(g.week) - 1]}期</Caption>
+          <Caption>{tr(['孕早期', '孕中期', '孕晚期'][trimester(g.week) - 1])}</Caption>
           <Caption>{tr('距预产期 {n} 天', { n: g.daysLeft })} · {fmtDate(state.pregnancy.dueDate)}</Caption>
         </Row>
 

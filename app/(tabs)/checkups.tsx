@@ -32,13 +32,13 @@ export default function Checkups() {
     const overdue = !c.done && g.week > c.weekTo;
     return (
       <Card style={{ marginBottom: space.sm, borderColor: current ? colors.pine : colors.line }} onPress={() => router.push(`/checkup/${c.id}`)}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Row>
+        <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Row style={{ flex: 1, alignItems: 'flex-start', marginRight: 8 }}>
             <View style={{ width: 44 }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: c.done ? colors.ink3 : colors.pine, fontVariant: ['tabular-nums'] }}>{c.weekFrom}</Text>
               <Caption>{tr('周')}</Caption>
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Body style={{ fontWeight: '700', color: c.done ? colors.ink3 : colors.ink }}>{tr(c.title)}</Body>
               <Caption>{c.date ? `${fmtDate(c.date)} · ${fmtRelative(c.date)}` : tr('未安排日期')}{c.hospital ? ' · ' + c.hospital : ''}</Caption>
             </View>

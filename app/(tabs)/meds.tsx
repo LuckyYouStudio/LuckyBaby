@@ -91,7 +91,7 @@ export default function Meds() {
             {later.map((s) => (
               <Card key={s.id} style={{ marginBottom: space.sm }}>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <View>
+                  <View style={{ flex: 1, marginRight: 8 }}>
                     <Body>{tr(s.name)} · {tr(s.dose)}</Body>
                     <Caption>{tr('孕 {w} 周开始', { w: s.weekFrom })}{s.note ? ' · ' + tr(s.note) : ''}</Caption>
                   </View>

@@ -9,7 +9,7 @@ const ICONS: Record<string, string> = { index: tr('今'), checkups: tr('检'), m
 
 function Icon({ name, focused }: { name: string; focused: boolean }) {
   return (
-    <Text style={{ fontSize: 18, fontWeight: '700', color: focused ? colors.pine : colors.ink3, lineHeight: 22 }}>{ICONS[name]}</Text>
+    <Text style={{ fontSize: 18, fontWeight: '700', color: focused ? colors.pine : colors.ink3, lineHeight: 22 }}>{tr(ICONS[name])}</Text>
   );
 }
 

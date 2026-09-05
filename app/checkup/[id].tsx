@@ -20,7 +20,7 @@ export default function CheckupDetail() {
   const original = state.checkups.find((c) => c.id === id);
   const [c, setC] = useState<Checkup | undefined>(original);
   const [metrics, setMetrics] = useState<Record<string, string>>(() => Object.fromEntries((original?.metrics ?? []).map((m) => [m.key, String(m.value)])));
-  const [itemsText, setItemsText] = useState(original?.items.join('\n') ?? '');
+  const [itemsText, setItemsText] = useState(original?.items.map((x) => tr(x)).join('\n') ?? '');
   const [bring, setBring] = useState(original?.bringItems?.length ? original.bringItems : defaultBring(original?.notes));
   const [newBring, setNewBring] = useState('');
   const [viewer, setViewer] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export default function CheckupDetail() {
     if (!c && original) {
       setC(original);
       setMetrics(Object.fromEntries(original.metrics.map((m) => [m.key, String(m.value)])));
-      setItemsText(original.items.join('\n'));
+      setItemsText(original.items.map((x) => tr(x)).join('\n'));
       setBring(original.bringItems?.length ? original.bringItems : defaultBring(original.notes));
     }
   }, [original]);
@@ -96,7 +96,7 @@ export default function CheckupDetail() {
             </>
           ) : (
             <>
-              <TextInput value={c.title} onChangeText={(t) => setC({ ...c, title: t })} style={{ fontSize: 24, fontWeight: '700', marginTop: 8, color: colors.ink }} />
+              <TextInput value={tr(c.title)} onChangeText={(t) => setC({ ...c, title: t })} style={{ fontSize: 24, fontWeight: '700', marginTop: 8, color: colors.ink }} />
               <Row style={{ gap: 8, marginTop: 8 }}>
                 <View style={{ flex: 1 }}><Field label={tr("日期")} value={c.date ?? ''} onChange={(t) => setC({ ...c, date: t })} placeholder="YYYY-MM-DD" keyboardType="numeric" /></View>
                 <View style={{ flex: 1 }}><Field label={tr("医院")} value={c.hospital ?? ''} onChange={(t) => setC({ ...c, hospital: t })} placeholder={tr("例如：协和")} /></View>

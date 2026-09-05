@@ -111,6 +111,8 @@ export interface AppState {
   remindersEnabled?: boolean;
   /** 待产包（本版本本机保存） */
   packing?: PackingItem[];
+  /** 首次启动同意隐私政策与健康数据处理的时间（ISO） */
+  consentAt?: string;
   /** 外观与字号（本机） */
   settings?: { theme: 'system' | 'light' | 'dark'; fontScale: number; lang?: 'system' | 'zh' | 'en' };
 }

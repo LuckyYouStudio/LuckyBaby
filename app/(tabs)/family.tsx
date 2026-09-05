@@ -10,6 +10,7 @@ import { LangToggle } from '../../src/components/LangToggle';
 import { bindApple, bindEmailStart, deleteAccount } from '../../src/lib/account';
 import { EmailOtp } from '../../src/components/EmailOtp';
 import { Platform } from 'react-native';
+import { openPrivacy, openTerms } from '../../src/lib/legal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, roleColor, space } from '../../src/theme';
 import { tr } from '../../src/i18n';
@@ -191,8 +192,12 @@ export default function Family() {
             <Caption style={{ color: colors.pine }}>{tr('设置')}</Caption>
           </Row>
         </Card>
+        <Row style={{ gap: 16, marginTop: space.xl, justifyContent: 'center' }}>
+          <Pressable onPress={openPrivacy}><Caption style={{ color: colors.pine }}>{tr('隐私政策')}</Caption></Pressable>
+          <Pressable onPress={openTerms}><Caption style={{ color: colors.pine }}>{tr('用户协议')}</Caption></Pressable>
+        </Row>
         {me.role === 'mom' && (
-          <Pressable style={{ marginTop: space.xxl, alignItems: 'center' }} onPress={() => alert(tr('清空数据'), tr('删除本机全部记录并重新开始？'), [{ text: tr('取消') }, { text: tr('清空'), style: 'destructive', onPress: () => dispatch({ type: 'reset' }) }])}>
+          <Pressable style={{ marginTop: space.lg, alignItems: 'center' }} onPress={() => alert(tr('清空数据'), tr('删除本机全部记录并重新开始？'), [{ text: tr('取消') }, { text: tr('清空'), style: 'destructive', onPress: () => dispatch({ type: 'reset' }) }])}>
             <Caption style={{ color: colors.warn }}>{tr('清空本机数据')}</Caption>
           </Pressable>
         )}

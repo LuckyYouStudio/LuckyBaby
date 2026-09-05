@@ -53,6 +53,7 @@ type Action =
   | { type: 'post'; byId: string; text: string }
   | { type: 'setReminders'; enabled: boolean }
   | { type: 'setCloudUser'; userId: string; bound: boolean }
+  | { type: 'consent' }
   | { type: 'setSettings'; settings: Partial<NonNullable<AppState['settings']>> }
   | { type: 'togglePacking'; id: string; byId: string }
   | { type: 'addPacking'; group: string; text: string };
@@ -88,7 +89,7 @@ function reducer(s: AppState, a: Action): AppState {
     case 'hydrate':
       return a.state;
     case 'reset':
-      return emptyState;
+      return { ...emptyState, consentAt: s.consentAt, settings: s.settings };
     case 'seedDemo':
       return demoState();
     case 'setup': {
@@ -161,6 +162,8 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, activities: [act(a.byId, 'log', a.text, 'family'), ...s.activities] };
     case 'setReminders':
       return { ...s, remindersEnabled: a.enabled };
+    case 'consent':
+      return { ...s, consentAt: new Date().toISOString() };
     case 'setCloudUser':
       return s.cloud ? { ...s, cloud: { ...s.cloud, userId: a.userId, bound: a.bound } } : s;
     case 'setSettings':

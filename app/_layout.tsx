@@ -22,10 +22,12 @@ function Gate() {
 
   useEffect(() => {
     if (!ready) return;
-    const inOnboarding = ['onboarding', 'demo', 'join', 'scan', 'auth'].includes(segments[0]);
+    const inOnboarding = ['onboarding', 'demo', 'join', 'scan', 'auth', 'consent'].includes(segments[0]);
+    if (!state.consentAt && segments[0] !== 'consent') { router.replace('/consent' as never); return; }
+    if (state.consentAt && segments[0] === 'consent') { router.replace(state.onboarded ? '/' : ('/onboarding' as never)); return; }
     if (!state.onboarded && !inOnboarding) router.replace('/onboarding');
     if (state.onboarded && inOnboarding) router.replace('/');
-  }, [ready, state.onboarded, segments]);
+  }, [ready, state.onboarded, state.consentAt, segments]);
 
   return (
     <>
@@ -54,6 +56,7 @@ function Gate() {
       <Stack.Screen name="scan" options={{ title: tr('扫码加入'), presentation: 'fullScreenModal' }} />
       <Stack.Screen name="join" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="consent" options={{ headerShown: false }} />
     </Stack>
     </>
   );

@@ -13,8 +13,11 @@ Expo SDK 57 + React Native 0.86 + TypeScript + expo-router（文件路由）。�
 ## 运行
 ```bash
 npm install
-npx expo start          # 然后按 i 开 iOS 模拟器（Expo Go），或按 w 开浏览器
+npm run ios             # 编译原生 iOS App 装到模拟器（需 Xcode + CocoaPods；首次约 10 分钟）
+npx expo start          # 只起 Metro（原生 App 已装好时用这个；按 w 可开浏览器调试）
 ```
+- `ios/`、`android/` 由 `npx expo prebuild` 生成，已 gitignore；改了 app.json 或图标要重新 prebuild。
+- 图标由 `assets/*.png` 生成（松绿圆 + 白"幸"），源脚本是一段 Swift（AppKit 画图），需要时重画。
 - 开发调试：打开 `/demo?as=m1|d1|f1` 会载入示例家庭（孕 25 周），并以准妈妈/准爸爸/家人身份进入。
 - 引导页底部"先用示例家庭看看"同样载入示例数据。
 

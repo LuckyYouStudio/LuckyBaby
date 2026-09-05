@@ -34,6 +34,13 @@ npm run ios:device      # 装到数据线连着的 iPhone（Release 包，独立
 - 其他页面：`kicks` 数胎动、`contractions` 宫缩计时、`packing` 待产包、`settings` 外观与字号、`invite` 邀请二维码/分享、`scan` 扫码加入、`join` 深链接 `luckybaby://join?code=`。
 - 邀请落地页：Edge Function `join`（`src/lib/invite.ts` 里的 INVITE_BASE）；上架后把函数里 APP_STORE_URL 填上并重新部署。
 
+## 国际化
+- `src/i18n/index.ts` 的 `tr('中文原文', {占位})`：中文原文即键，英文在 `src/i18n/en.ts`；没有对照返回原文。**新增任何界面文字都要用 tr() 包起来并补 en.ts**。
+- 语言：设置页“语言”（跟随系统 / 中文 / English），默认按设备语言（expo-localization）。根布局 `setLang()` 后靠 store 重渲染生效，所以 **含 tr() 的常量不能放在模块顶层**（改成函数，如 `KINDS()`）。
+- 内置数据（产检模板、补充剂、宝宝大小、待产包、参考值）存中文，显示时 `tr(x)`；用户输入原样显示。
+- 日期文案在 `src/lib/pregnancy.ts` 按语言分支；邀请落地页按 `lang` 参数 / Accept-Language。
+- 检查遗漏：提取所有 tr('…') 键与 en.ts 对比（见 git 历史里的脚本思路）。
+
 ## 约定
 - 角色可见性：mom 全可见；dad 看 partner/family；family 只看 family（产检日程例外：家人可看标题/日期，不看数值和结果）。
 - 每条记录的 `visibility` 由准妈妈决定；默认产检/用药为 partner，动态为 family。

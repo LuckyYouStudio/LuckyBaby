@@ -3,8 +3,9 @@ import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { colors } from '../../src/theme';
 import { useStore } from '../../src/store/store';
+import { tr } from '../../src/i18n';
 
-const ICONS: Record<string, string> = { index: '今', checkups: '检', meds: '药', life: '记', family: '家' };
+const ICONS: Record<string, string> = { index: tr('今'), checkups: tr('检'), meds: tr('药'), life: tr('记'), family: tr('家') };
 
 function Icon({ name, focused }: { name: string; focused: boolean }) {
   return (
@@ -27,11 +28,11 @@ export default function TabLayout() {
         tabBarIcon: ({ focused }) => <Icon name={route.name} focused={focused} />,
       })}
     >
-      <Tabs.Screen name="index" options={{ title: '今天', headerShown: false }} />
-      <Tabs.Screen name="checkups" options={{ title: '产检' }} />
-      <Tabs.Screen name="meds" options={{ title: '用药' }} />
-      <Tabs.Screen name="life" options={{ title: '记录' }} />
-      <Tabs.Screen name="family" options={{ title: '家庭' }} />
+      <Tabs.Screen name="index" options={{ title: tr('今天'), headerShown: false }} />
+      <Tabs.Screen name="checkups" options={{ title: tr('产检') }} />
+      <Tabs.Screen name="meds" options={{ title: tr('用药') }} />
+      <Tabs.Screen name="life" options={{ title: tr('记录') }} />
+      <Tabs.Screen name="family" options={{ title: tr('家庭') }} />
     </Tabs>
   );
 }

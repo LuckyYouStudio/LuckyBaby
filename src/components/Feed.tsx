@@ -5,6 +5,7 @@ import { Avatar, Body, Body2, Caption, Card, Empty, Pill, Row } from './ui';
 import { colors, roleColor, space } from '../theme';
 import { fmtTime } from '../lib/pregnancy';
 import type { Activity } from '../data/types';
+import { tr } from '../i18n';
 
 function Item({ a }: { a: Activity }) {
   const { state, dispatch } = useStore();
@@ -15,7 +16,7 @@ function Item({ a }: { a: Activity }) {
   if (!who || !me) return null;
   const liked = a.likes.includes(me.id);
   const kindTone = a.kind === 'checkup' ? 'pine' : a.kind === 'supplement' ? 'apricot' : a.kind === 'family' ? 'slate' : 'grey';
-  const kindText = { checkup: '产检', supplement: '用药', log: '记录', family: '家庭', system: '系统' }[a.kind];
+  const kindText = { checkup: tr('产检'), supplement: tr('用药'), log: tr('记录'), family: tr('家庭'), system: tr('系统') }[a.kind];
   return (
     <Card style={{ marginBottom: space.sm }}>
       <Row style={{ alignItems: 'flex-start' }}>
@@ -41,11 +42,11 @@ function Item({ a }: { a: Activity }) {
           <Row style={{ marginTop: 8, gap: 16 }}>
             <Pressable onPress={() => dispatch({ type: 'like', activityId: a.id, byId: me.id })}>
               <Text style={{ color: liked ? colors.apricot : colors.ink3, fontWeight: '600' }}>
-                {liked ? '♥' : '♡'} {a.likes.length > 0 ? a.likes.length : '赞'}
+                {liked ? '♥' : '♡'} {a.likes.length > 0 ? a.likes.length : tr('赞')}
               </Text>
             </Pressable>
             <Pressable onPress={() => setOpen((o) => !o)}>
-              <Text style={{ color: colors.ink3, fontWeight: '600' }}>留言</Text>
+              <Text style={{ color: colors.ink3, fontWeight: '600' }}>{tr('留言')}</Text>
             </Pressable>
           </Row>
           {open && (
@@ -53,7 +54,7 @@ function Item({ a }: { a: Activity }) {
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
-                placeholder="说点什么…"
+                placeholder={tr("说点什么…")}
                 placeholderTextColor={colors.ink3}
                 style={{ flex: 1, borderWidth: 1, borderColor: colors.line, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, color: colors.ink, backgroundColor: colors.paper }}
                 onSubmitEditing={() => {
@@ -76,7 +77,7 @@ export function Feed({ limit }: { limit?: number }) {
   const { state } = useStore();
   const { canSee } = useDerived();
   const list = state.activities.filter((a) => canSee(a.visibility)).slice(0, limit ?? 200);
-  if (list.length === 0) return <Empty text="还没有动态。记一笔产检、吃药或心情，家人就能看到。" />;
+  if (list.length === 0) return <Empty text={tr("还没有动态。记一笔产检、吃药或心情，家人就能看到。")} />;
   return (
     <View>
       {list.map((a) => (

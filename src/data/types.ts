@@ -112,5 +112,5 @@ export interface AppState {
   /** 待产包（本版本本机保存） */
   packing?: PackingItem[];
   /** 外观与字号（本机） */
-  settings?: { theme: 'system' | 'light' | 'dark'; fontScale: number };
+  settings?: { theme: 'system' | 'light' | 'dark'; fontScale: number; lang?: 'system' | 'zh' | 'en' };
 }

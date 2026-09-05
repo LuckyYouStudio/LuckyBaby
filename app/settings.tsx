@@ -3,11 +3,13 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useStore } from '../src/store/store';
 import { Body, Body2, Caption, Card, Screen, Section } from '../src/components/ui';
 import { colors, space, type ThemeMode } from '../src/theme';
+import { tr } from '../src/i18n';
 
 export default function Settings() {
   const { state, dispatch } = useStore();
   const theme = state.settings?.theme ?? 'system';
   const scale = state.settings?.fontScale ?? 1;
+  const langPref = state.settings?.lang ?? 'system';
   const Opt = ({ value, cur, label, hint, onPick }: { value: string | number; cur: string | number; label: string; hint?: string; onPick: (v: never) => void }) => {
     const on = value === cur;
     return (
@@ -20,25 +22,32 @@ export default function Settings() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: 60 }}>
-        <Section title="外观">
+        <Section title={tr("外观")}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Opt value="system" cur={theme} label="跟随系统" onPick={(v: ThemeMode) => dispatch({ type: 'setSettings', settings: { theme: v } })} />
-            <Opt value="light" cur={theme} label="浅色" onPick={(v: ThemeMode) => dispatch({ type: 'setSettings', settings: { theme: v } })} />
-            <Opt value="dark" cur={theme} label="深色" hint="夜里看不刺眼" onPick={(v: ThemeMode) => dispatch({ type: 'setSettings', settings: { theme: v } })} />
+            <Opt value="system" cur={theme} label={tr("跟随系统")} onPick={(v: ThemeMode) => dispatch({ type: 'setSettings', settings: { theme: v } })} />
+            <Opt value="light" cur={theme} label={tr("浅色")} onPick={(v: ThemeMode) => dispatch({ type: 'setSettings', settings: { theme: v } })} />
+            <Opt value="dark" cur={theme} label={tr("深色")} hint={tr("夜里看不刺眼")} onPick={(v: ThemeMode) => dispatch({ type: 'setSettings', settings: { theme: v } })} />
           </View>
         </Section>
-        <Section title="字号">
+        <Section title={tr("语言")}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Opt value={1} cur={scale} label="标准" onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />
-            <Opt value={1.15} cur={scale} label="大" onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />
-            <Opt value={1.3} cur={scale} label="特大" hint="给长辈" onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />
+            <Opt value="system" cur={langPref} label={tr("跟随系统")} onPick={(v: 'system' | 'zh' | 'en') => dispatch({ type: 'setSettings', settings: { lang: v } })} />
+            <Opt value="zh" cur={langPref} label="中文" onPick={(v: 'system' | 'zh' | 'en') => dispatch({ type: 'setSettings', settings: { lang: v } })} />
+            <Opt value="en" cur={langPref} label="English" onPick={(v: 'system' | 'zh' | 'en') => dispatch({ type: 'setSettings', settings: { lang: v } })} />
+          </View>
+        </Section>
+        <Section title={tr("字号")}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Opt value={1} cur={scale} label={tr("标准")} onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />
+            <Opt value={1.15} cur={scale} label={tr("大")} onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />
+            <Opt value={1.3} cur={scale} label={tr("特大")} hint={tr("给长辈")} onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />
           </View>
           <Card style={{ marginTop: space.md }}>
-            <Body>孕 25 周 3 天 · 像一颗白萝卜</Body>
-            <Body2 style={{ marginTop: 4 }}>这是正文的样子。手机系统里的"文字大小"设置也会叠加生效。</Body2>
+            <Body>{tr('孕 25 周 3 天 · 像一颗白萝卜')}</Body>
+            <Body2 style={{ marginTop: 4 }}>{tr('这是正文的样子。手机系统里的"文字大小"设置也会叠加生效。')}</Body2>
           </Card>
         </Section>
-        <Caption style={{ marginTop: space.xl }}>这两项只影响这台手机，不会同步给家人。</Caption>
+        <Caption style={{ marginTop: space.xl }}>{tr('这两项只影响这台手机，不会同步给家人。')}</Caption>
       </ScrollView>
     </Screen>
   );

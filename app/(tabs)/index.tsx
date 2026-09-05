@@ -11,13 +11,14 @@ import { fmtDate, fmtRelative, fmtTime, trimester, uid } from '../../src/lib/pre
 import { requestReminderPermission } from '../../src/lib/reminders';
 import { alert } from '../../src/lib/alert';
 import { Platform } from 'react-native';
+import { tr } from '../../src/i18n';
 
 // 在渲染时取色，深浅色切换才会跟着变
 const quickOptions = () => [
-  { t: '还好', e: '🙂', fg: colors.pine, bg: colors.pineSoft },
-  { t: '吐了', e: '🤢', fg: colors.warn, bg: colors.warnSoft },
-  { t: '累瘫', e: '😪', fg: colors.slate, bg: colors.slateSoft },
-  { t: '不舒服', e: '😣', fg: colors.apricot, bg: colors.apricotSoft },
+  { t: tr('还好'), e: '🙂', fg: colors.pine, bg: colors.pineSoft },
+  { t: tr('吐了'), e: '🤢', fg: colors.warn, bg: colors.warnSoft },
+  { t: tr('累瘫'), e: '😪', fg: colors.slate, bg: colors.slateSoft },
+  { t: tr('不舒服'), e: '😣', fg: colors.apricot, bg: colors.apricotSoft },
 ];
 
 export default function Today() {
@@ -39,23 +40,23 @@ export default function Today() {
   const quick = (t: string) => {
     if (todayMood) dispatch({ type: 'deleteLog', id: todayMood.id });
     if (todayMood?.text === t) return;
-    dispatch({ type: 'addLog', log: { id: uid(), kind: 'mood', date: today, text: t, byId: me.id, at: new Date().toISOString(), visibility: 'family' }, activity: `今天${t}` });
+    dispatch({ type: 'addLog', log: { id: uid(), kind: 'mood', date: today, text: t, byId: me.id, at: new Date().toISOString(), visibility: 'family' }, activity: tr('今天{mood}', { mood: tr(t) }) });
   };
   const enableReminders = async () => {
     const ok = await requestReminderPermission();
-    if (!ok) { alert('没有拿到通知权限', '可以在系统设置里给「幸运宝贝」打开通知，再回来开启。'); return; }
+    if (!ok) { alert(tr('没有拿到通知权限'), tr('可以在系统设置里给「幸运宝贝」打开通知，再回来开启。')); return; }
     dispatch({ type: 'setReminders', enabled: true });
   };
-  const nick = state.pregnancy.babyNickname ?? '宝宝';
+  const nick = state.pregnancy.babyNickname ?? tr('宝宝');
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: insets.top + 12, paddingBottom: 40 }}>
         <Row style={{ justifyContent: 'space-between', marginBottom: space.md }}>
           <View>
-            <Caption>{me.role === 'mom' ? `你好，${me.name}` : `${state.pregnancy.momName} 的孕期 · 你是${roleColor[me.role].label}`}</Caption>
+            <Caption>{me.role === 'mom' ? tr('你好，{name}', { name: me.name }) : tr('{mom} 的孕期 · 你是{role}', { mom: state.pregnancy.momName, role: tr(roleColor[me.role].label) })}</Caption>
             <H1>
-              孕 {g.week} 周 {g.day} 天
+              {tr('孕 {w} 周 {d} 天', { w: g.week, d: g.day })}
             </H1>
           </View>
           <Avatar name={me.name} role={me.role} size={40} />
@@ -65,20 +66,20 @@ export default function Today() {
           <View style={{ width: `${progress * 100}%`, height: 6, backgroundColor: colors.pine }} />
         </View>
         <Row style={{ justifyContent: 'space-between', marginBottom: space.lg }}>
-          <Caption>孕{['早', '中', '晚'][trimester(g.week) - 1]}期</Caption>
-          <Caption>距预产期 {g.daysLeft} 天 · {fmtDate(state.pregnancy.dueDate)}</Caption>
+          <Caption>孕{[tr('早'), tr('中'), tr('晚')][trimester(g.week) - 1]}期</Caption>
+          <Caption>{tr('距预产期 {n} 天', { n: g.daysLeft })} · {fmtDate(state.pregnancy.dueDate)}</Caption>
         </Row>
 
         {me.role === 'mom' && (
           <View style={{ marginBottom: space.lg }}>
-            <Caption style={{ marginBottom: 6 }}>今天怎么样？点一下就行</Caption>
+            <Caption style={{ marginBottom: 6 }}>{tr('今天怎么样？点一下就行')}</Caption>
             <Row style={{ gap: 8 }}>
               {quickOptions().map((q) => {
                 const on = todayMood?.text === q.t;
                 return (
                   <Pressable key={q.t} onPress={() => quick(q.t)} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, borderColor: on ? q.fg : colors.line, backgroundColor: on ? q.bg : colors.card }}>
                     <Text style={{ fontSize: 22 }}>{q.e}</Text>
-                    <Text style={{ fontWeight: '700', color: on ? q.fg : colors.ink2, marginTop: 2 }}>{q.t}</Text>
+                    <Text style={{ fontWeight: '700', color: on ? q.fg : colors.ink2, marginTop: 2 }}>{tr(q.t)}</Text>
                   </Pressable>
                 );
               })}
@@ -90,25 +91,25 @@ export default function Today() {
           <Card style={{ marginBottom: space.lg, backgroundColor: colors.apricotSoft, borderColor: colors.apricotSoft }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <View style={{ flex: 1, marginRight: 8 }}>
-                <Body style={{ fontWeight: '700', color: colors.ink }}>让手机提醒，不用记</Body>
-                <Caption>产检前一晚说要不要空腹、带什么；补充剂到点提醒。</Caption>
+                <Body style={{ fontWeight: '700', color: colors.ink }}>{tr('让手机提醒，不用记')}</Body>
+                <Caption>{tr('产检前一晚说要不要空腹、带什么；补充剂到点提醒。')}</Caption>
               </View>
-              <Button title="开启" small onPress={enableReminders} />
+              <Button title={tr("开启")} small onPress={enableReminders} />
             </Row>
           </Card>
         )}
 
         <Card style={{ backgroundColor: colors.pineSoft, borderColor: colors.pineSoft }}>
-          <Caption style={{ color: colors.pine }}>本周的{nick}</Caption>
-          <H2 style={{ color: colors.pine, marginTop: 2 }}>像一颗{baby.like}</H2>
+          <Caption style={{ color: colors.pine }}>{tr('本周的{nick}', { nick })}</Caption>
+          <H2 style={{ color: colors.pine, marginTop: 2 }}>{tr('像一颗{like}', { like: tr(baby.like) })}</H2>
           <Body2 style={{ color: colors.pine, marginTop: 4 }}>
-            {baby.length} · {baby.note}
+            {baby.length} · {tr(baby.note)}
           </Body2>
         </Card>
 
-        {me.role !== 'family' && <Section title="今天要吃" right={<Pressable onPress={() => router.push('/meds')}><Caption style={{ color: colors.pine }}>全部</Caption></Pressable>}>
+        {me.role !== 'family' && <Section title={tr("今天要吃")} right={<Pressable onPress={() => router.push('/meds')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           {dueSupplements.length === 0 ? (
-            <Body2>本周没有需要吃的补充剂。</Body2>
+            <Body2>{tr('本周没有需要吃的补充剂。')}</Body2>
           ) : (
             <Card style={{ padding: 0 }}>
               {dueSupplements.map((s, i) => {
@@ -125,43 +126,42 @@ export default function Today() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Body style={log ? { color: colors.ink3, textDecorationLine: 'line-through' } : undefined}>
-                        {s.name} · {s.dose}
+                        {tr(s.name)} · {tr(s.dose)}
                       </Body>
-                      <Caption>{log && who ? `${who.name} 记于 ${fmtTime(log.at).replace('今天 ', '')}` : `${s.timeOfDay}${s.note ? ' · ' + s.note : ''}`}</Caption>
+                      <Caption>{log && who ? `${who.name} 记于 ${fmtTime(log.at).replace(tr('今天 '), '')}` : `${s.timeOfDay}${s.note ? ' · ' + tr(s.note) : ''}`}</Caption>
                     </View>
                   </Pressable>
                 );
               })}
             </Card>
           )}
-          {me.role === 'dad' && <Caption style={{ marginTop: 6 }}>你也可以替她打卡，动态里会显示是你记的。</Caption>}
+          {me.role === 'dad' && <Caption style={{ marginTop: 6 }}>{tr('你也可以替她打卡，动态里会显示是你记的。')}</Caption>}
         </Section>}
 
-        <Section title="接下来的产检" right={<Pressable onPress={() => router.push('/checkups')}><Caption style={{ color: colors.pine }}>全部</Caption></Pressable>}>
+        <Section title={tr("接下来的产检")} right={<Pressable onPress={() => router.push('/checkups')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           {upcoming.length === 0 ? (
-            <Body2>近期没有安排的产检。</Body2>
+            <Body2>{tr('近期没有安排的产检。')}</Body2>
           ) : (
             upcoming.map((c) => {
               const comp = c.companionId ? byId(c.companionId) : undefined;
               return (
                 <Card key={c.id} style={{ marginBottom: space.sm }} onPress={() => router.push(`/checkup/${c.id}`)}>
                   <Row style={{ justifyContent: 'space-between' }}>
-                    <Body style={{ fontWeight: '700' }}>{c.title}</Body>
+                    <Body style={{ fontWeight: '700' }}>{tr(c.title)}</Body>
                     <Pill text={fmtRelative(c.date!)} tone={c.date === today ? 'apricot' : 'grey'} />
                   </Row>
                   <Body2 style={{ marginTop: 2 }}>
-                    {fmtDate(c.date)} · 孕 {c.weekFrom}
-                    {c.weekTo !== c.weekFrom ? `–${c.weekTo}` : ''} 周{c.hospital ? ' · ' + c.hospital : ''}
+                    {fmtDate(c.date)} · {tr('孕 {w} 周', { w: c.weekTo !== c.weekFrom ? `${c.weekFrom}–${c.weekTo}` : c.weekFrom })}{c.hospital ? ' · ' + c.hospital : ''}
                   </Body2>
-                  {!!c.notes && <Caption style={{ marginTop: 4, color: colors.warn }}>{c.notes}</Caption>}
+                  {!!c.notes && <Caption style={{ marginTop: 4, color: colors.warn }}>{tr(c.notes)}</Caption>}
                   <Row style={{ marginTop: 8 }}>
                     {comp ? (
                       <>
                         <Avatar name={comp.name} role={comp.role} size={22} />
-                        <Caption>{comp.name} 陪同</Caption>
+                        <Caption>{comp.name} {tr('陪同')}</Caption>
                       </>
                     ) : (
-                      <Caption>还没有人说要陪</Caption>
+                      <Caption>{tr('还没有人说要陪')}</Caption>
                     )}
                   </Row>
                 </Card>
@@ -170,11 +170,11 @@ export default function Today() {
           )}
         </Section>
 
-        <Section title="家里的动态" right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>全部</Caption></Pressable>}>
+        <Section title={tr("家里的动态")} right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           <Feed limit={3} />
         </Section>
 
-        <Button title="记一笔" onPress={() => router.push('/log/new')} style={{ marginTop: space.xl }} />
+        <Button title={tr("记一笔")} onPress={() => router.push('/log/new')} style={{ marginTop: space.xl }} />
       </ScrollView>
     </Screen>
   );

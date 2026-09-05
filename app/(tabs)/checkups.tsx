@@ -5,6 +5,7 @@ import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Pill, Row, Screen } from '../../src/components/ui';
 import { colors, space } from '../../src/theme';
 import { fmtDate, fmtRelative, uid } from '../../src/lib/pregnancy';
+import { tr } from '../../src/i18n';
 
 export default function Checkups() {
   const { state, dispatch } = useStore();
@@ -20,7 +21,7 @@ export default function Checkups() {
     const id = uid();
     dispatch({
       type: 'upsertCheckup',
-      checkup: { id, title: '自定义产检', weekFrom: g.week, weekTo: g.week, date: today, items: [], done: false, metrics: [], visibility: 'partner' },
+      checkup: { id, title: tr('自定义产检'), weekFrom: g.week, weekTo: g.week, date: today, items: [], done: false, metrics: [], visibility: 'partner' },
     });
     router.push(`/checkup/${id}`);
   };
@@ -35,29 +36,29 @@ export default function Checkups() {
           <Row>
             <View style={{ width: 44 }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: c.done ? colors.ink3 : colors.pine, fontVariant: ['tabular-nums'] }}>{c.weekFrom}</Text>
-              <Caption>周</Caption>
+              <Caption>{tr('周')}</Caption>
             </View>
             <View>
-              <Body style={{ fontWeight: '700', color: c.done ? colors.ink3 : colors.ink }}>{c.title}</Body>
-              <Caption>{c.date ? `${fmtDate(c.date)} · ${fmtRelative(c.date)}` : '未安排日期'}{c.hospital ? ' · ' + c.hospital : ''}</Caption>
+              <Body style={{ fontWeight: '700', color: c.done ? colors.ink3 : colors.ink }}>{tr(c.title)}</Body>
+              <Caption>{c.date ? `${fmtDate(c.date)} · ${fmtRelative(c.date)}` : tr('未安排日期')}{c.hospital ? ' · ' + c.hospital : ''}</Caption>
             </View>
           </Row>
-          {c.done ? <Pill text="已完成" tone="grey" /> : current ? <Pill text="本周" tone="pine" /> : overdue ? <Pill text="已过窗口" tone="warn" /> : null}
+          {c.done ? <Pill text={tr("已完成")} tone="grey" /> : current ? <Pill text={tr("本周")} tone="pine" /> : overdue ? <Pill text={tr("已过窗口")} tone="warn" /> : null}
         </Row>
-        {!c.done && c.items.length > 0 && <Body2 style={{ marginTop: 6 }} numberOfLines={1}>{c.items.join(' · ')}</Body2>}
+        {!c.done && c.items.length > 0 && <Body2 style={{ marginTop: 6 }} numberOfLines={1}>{c.items.map((x) => tr(x)).join(' · ')}</Body2>}
         {!c.done && (
           <Row style={{ marginTop: 8 }}>
             {comp ? (
               <>
                 <Avatar name={comp.name} role={comp.role} size={22} />
-                <Caption>{comp.name} 陪同</Caption>
+                <Caption>{comp.name} {tr('陪同')}</Caption>
               </>
             ) : me.role !== 'family' ? (
-              <Pressable onPress={() => dispatch({ type: 'upsertCheckup', checkup: { ...c, companionId: me.id }, activity: `${me.name} 要陪「${c.title}」` })}>
-                <Caption style={{ color: colors.apricot, fontWeight: '700' }}>我陪</Caption>
+              <Pressable onPress={() => dispatch({ type: 'upsertCheckup', checkup: { ...c, companionId: me.id }, activity: tr('{name} 要陪「{title}」', { name: me.name, title: tr(c.title) }) })}>
+                <Caption style={{ color: colors.apricot, fontWeight: '700' }}>{tr('我陪')}</Caption>
               </Pressable>
             ) : (
-              <Caption>还没有人说要陪</Caption>
+              <Caption>{tr('还没有人说要陪')}</Caption>
             )}
           </Row>
         )}
@@ -73,14 +74,14 @@ export default function Checkups() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: 40 }}>
-        <Body2 style={{ marginBottom: space.md }}>按常规产检节点自动排入，点开可改日期、医院、记录数值。医院之间流程略有差异，以医生安排为准。</Body2>
+        <Body2 style={{ marginBottom: space.md }}>{tr('按常规产检节点自动排入，点开可改日期、医院、记录数值。医院之间流程略有差异，以医生安排为准。')}</Body2>
         {todo.map((c) => (
           <Item key={c.id} c={c} />
         ))}
-        {me.role !== 'family' && <Button title="添加一次产检" kind="ghost" onPress={addCustom} style={{ marginTop: space.sm }} />}
+        {me.role !== 'family' && <Button title={tr("添加一次产检")} kind="ghost" onPress={addCustom} style={{ marginTop: space.sm }} />}
         {done.length > 0 && (
           <>
-            <Caption style={{ marginTop: space.xl, marginBottom: space.sm }}>已完成 {done.length} 次</Caption>
+            <Caption style={{ marginTop: space.xl, marginBottom: space.sm }}>{tr('已完成 {n} 次', { n: done.length })}</Caption>
             {done.map((c) => (
               <Item key={c.id} c={c} />
             ))}

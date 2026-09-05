@@ -2,6 +2,7 @@
 // 并在别的家人改动时拉回来合并。
 import { supabase } from '../lib/supabase';
 import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Role, Supplement, SupplementLog } from '../data/types';
+import { tr } from '../i18n';
 
 export interface CloudInfo { familyId: string; userId: string }
 
@@ -63,9 +64,9 @@ export async function myFamilyRemote() {
 }
 
 function friendly(msg: string): string {
-  if (msg.includes('invite code not found')) return '邀请码不对，再核对一下';
-  if (msg.includes('already a member')) return '你已经在这个家庭里了';
-  if (msg.includes('dad already exists')) return '这个家庭已经有准爸爸了，请选"家人"';
+  if (msg.includes('invite code not found')) return tr('邀请码不对，再核对一下');
+  if (msg.includes('already a member')) return tr('你已经在这个家庭里了');
+  if (msg.includes('dad already exists')) return tr('这个家庭已经有准爸爸了，请选"家人"');
   return msg;
 }
 

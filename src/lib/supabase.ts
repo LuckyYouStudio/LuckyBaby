@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { tr } from '../i18n';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -17,10 +18,10 @@ export const cloudEnabled = supabase !== null;
 
 /** 匿名登录：家人不用注册账号，靠邀请码进家庭 */
 export async function ensureSession(): Promise<string> {
-  if (!supabase) throw new Error('云同步未配置');
+  if (!supabase) throw new Error(tr('云同步未配置'));
   const { data } = await supabase.auth.getSession();
   if (data.session?.user) return data.session.user.id;
   const { data: anonData, error } = await supabase.auth.signInAnonymously();
-  if (error || !anonData.user) throw error ?? new Error('匿名登录失败');
+  if (error || !anonData.user) throw error ?? new Error(tr('匿名登录失败'));
   return anonData.user.id;
 }

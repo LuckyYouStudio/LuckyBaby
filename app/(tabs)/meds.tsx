@@ -4,6 +4,7 @@ import { useDerived, useStore } from '../../src/store/store';
 import { Body, Body2, Button, Caption, Card, Field, Pill, Row, Screen, Section } from '../../src/components/ui';
 import { colors, space } from '../../src/theme';
 import { addDays, uid } from '../../src/lib/pregnancy';
+import { tr } from '../../src/i18n';
 
 export default function Meds() {
   const { state, dispatch } = useStore();
@@ -24,16 +25,16 @@ export default function Meds() {
 
   const save = () => {
     if (!name.trim()) return;
-    dispatch({ type: 'upsertSupplement', supplement: { id: uid(), name: name.trim(), dose: dose.trim() || '按医嘱', timeOfDay: time || '08:00', weekFrom: g.week, weekTo: 40, active: true, visibility: 'partner' } });
+    dispatch({ type: 'upsertSupplement', supplement: { id: uid(), name: name.trim(), dose: dose.trim() || tr('按医嘱'), timeOfDay: time || '08:00', weekFrom: g.week, weekTo: 40, active: true, visibility: 'partner' } });
     setName(''); setDose(''); setAdding(false);
   };
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: 40 }}>
-        <Body2 style={{ marginBottom: space.sm }}>预置了常见补充剂与推荐孕周，剂量以医嘱为准。准爸爸也可以替她打卡。</Body2>
+        <Body2 style={{ marginBottom: space.sm }}>{tr('预置了常见补充剂与推荐孕周，剂量以医嘱为准。准爸爸也可以替她打卡。')}</Body2>
 
-        <Section title="最近 7 天">
+        <Section title={tr("最近 7 天")}>
           <Card style={{ padding: space.md }}>
             <Row style={{ marginLeft: 72, justifyContent: 'space-between', marginBottom: 6 }}>
               {days.map((d) => (
@@ -42,10 +43,10 @@ export default function Meds() {
                 </Caption>
               ))}
             </Row>
-            {current.length === 0 && <Body2>本周没有需要吃的补充剂。</Body2>}
+            {current.length === 0 && <Body2>{tr('本周没有需要吃的补充剂。')}</Body2>}
             {current.map((s) => (
               <Row key={s.id} style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-                <Body style={{ width: 72 }} numberOfLines={1}>{s.name}</Body>
+                <Body style={{ width: 72 }} numberOfLines={1}>{tr(s.name)}</Body>
                 <Row style={{ flex: 1, justifyContent: 'space-between' }}>
                   {days.map((d) => {
                     const l = logOf(s.id, d);
@@ -65,19 +66,19 @@ export default function Meds() {
               </Row>
             ))}
             <Row style={{ marginTop: 4, gap: 12 }}>
-              <Row style={{ gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.pine }} /><Caption>妈妈记的</Caption></Row>
-              <Row style={{ gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.apricot }} /><Caption>爸爸记的</Caption></Row>
+              <Row style={{ gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.pine }} /><Caption>{tr('妈妈记的')}</Caption></Row>
+              <Row style={{ gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.apricot }} /><Caption>{tr('爸爸记的')}</Caption></Row>
             </Row>
           </Card>
         </Section>
 
-        <Section title="正在吃">
+        <Section title={tr("正在吃")}>
           {current.map((s) => (
             <Card key={s.id} style={{ marginBottom: space.sm }}>
               <Row style={{ justifyContent: 'space-between' }}>
                 <View style={{ flex: 1 }}>
-                  <Body style={{ fontWeight: '700' }}>{s.name} · {s.dose}</Body>
-                  <Caption>每天 {s.timeOfDay} · 孕 {s.weekFrom}–{s.weekTo} 周{s.note ? ' · ' + s.note : ''}</Caption>
+                  <Body style={{ fontWeight: '700' }}>{tr(s.name)} · {tr(s.dose)}</Body>
+                  <Caption>{tr('每天 {t}', { t: s.timeOfDay })} · {tr('孕 {w} 周', { w: `${s.weekFrom}–${s.weekTo}` })}{s.note ? ' · ' + tr(s.note) : ''}</Caption>
                 </View>
                 {!readonly && <Switch value={s.active} onValueChange={(v) => dispatch({ type: 'upsertSupplement', supplement: { ...s, active: v } })} trackColor={{ true: colors.pine }} />}
               </Row>
@@ -86,15 +87,15 @@ export default function Meds() {
         </Section>
 
         {later.length > 0 && (
-          <Section title="之后要吃">
+          <Section title={tr("之后要吃")}>
             {later.map((s) => (
               <Card key={s.id} style={{ marginBottom: space.sm }}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <View>
-                    <Body>{s.name} · {s.dose}</Body>
-                    <Caption>孕 {s.weekFrom} 周开始{s.note ? ' · ' + s.note : ''}</Caption>
+                    <Body>{tr(s.name)} · {tr(s.dose)}</Body>
+                    <Caption>{tr('孕 {w} 周开始', { w: s.weekFrom })}{s.note ? ' · ' + tr(s.note) : ''}</Caption>
                   </View>
-                  <Pill text={`${s.weekFrom} 周起`} tone="grey" />
+                  <Pill text={tr('{w} 周起', { w: s.weekFrom })} tone="grey" />
                 </Row>
               </Card>
             ))}
@@ -102,12 +103,12 @@ export default function Meds() {
         )}
 
         {past.length > 0 && (
-          <Section title="已停">
+          <Section title={tr("已停")}>
             {past.map((s) => (
               <Card key={s.id} style={{ marginBottom: space.sm }}>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Body style={{ color: colors.ink3 }}>{s.name} · {s.dose}</Body>
-                  {!readonly && !s.active && <Pressable onPress={() => dispatch({ type: 'upsertSupplement', supplement: { ...s, active: true, weekTo: 40 } })}><Caption style={{ color: colors.pine }}>恢复</Caption></Pressable>}
+                  <Body style={{ color: colors.ink3 }}>{tr(s.name)} · {tr(s.dose)}</Body>
+                  {!readonly && !s.active && <Pressable onPress={() => dispatch({ type: 'upsertSupplement', supplement: { ...s, active: true, weekTo: 40 } })}><Caption style={{ color: colors.pine }}>{tr('恢复')}</Caption></Pressable>}
                 </Row>
               </Card>
             ))}
@@ -116,16 +117,16 @@ export default function Meds() {
 
         {!readonly && (adding ? (
           <Card style={{ marginTop: space.xl }}>
-            <Field label="名称" value={name} onChange={setName} placeholder="例如：地屈孕酮" />
-            <Field label="剂量" value={dose} onChange={setDose} placeholder="例如：10 mg" />
-            <Field label="每天几点" value={time} onChange={setTime} placeholder="08:00" />
+            <Field label={tr("名称")} value={name} onChange={setName} placeholder={tr("例如：地屈孕酮")} />
+            <Field label={tr("剂量")} value={dose} onChange={setDose} placeholder={tr("例如：10 mg")} />
+            <Field label={tr("每天几点")} value={time} onChange={setTime} placeholder="08:00" />
             <Row style={{ gap: 8 }}>
-              <Button title="保存" onPress={save} small />
-              <Button title="取消" kind="ghost" onPress={() => setAdding(false)} small />
+              <Button title={tr("保存")} onPress={save} small />
+              <Button title={tr("取消")} kind="ghost" onPress={() => setAdding(false)} small />
             </Row>
           </Card>
         ) : (
-          <Button title="添加药物或补充剂" kind="ghost" onPress={() => setAdding(true)} style={{ marginTop: space.xl }} />
+          <Button title={tr("添加药物或补充剂")} kind="ghost" onPress={() => setAdding(true)} style={{ marginTop: space.xl }} />
         ))}
       </ScrollView>
     </Screen>

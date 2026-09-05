@@ -10,6 +10,7 @@ import { cloudEnabled, ensureSession } from '../lib/supabase';
 import { myFamilyRemote, pullAll, pushDiff, reportClientError, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 import { cancelReminders, rescheduleReminders } from '../lib/reminders';
 import { registerPushToken } from '../lib/push';
+import { tr } from '../i18n';
 
 const KEY = 'luckybaby.state.v1';
 const SYNCED_KEY = 'luckybaby.synced.v1'; // 上次与云端一致的快照
@@ -140,7 +141,7 @@ function reducer(s: AppState, a: Action): AppState {
       const log: SupplementLog = { id: logIdFor(a.supplementId, a.date), supplementId: a.supplementId, date: a.date, byId: a.byId, at: new Date().toISOString() };
       const sup = s.supplements.find((x) => x.id === a.supplementId);
       const by = s.members.find((m) => m.id === a.byId);
-      const text = by?.role === 'mom' ? `吃了${sup?.name ?? '补充剂'}` : `帮她记了一次${sup?.name ?? '补充剂'}`;
+      const text = by?.role === 'mom' ? `吃了${sup?.name ?? tr('补充剂')}` : `帮她记了一次${sup?.name ?? tr('补充剂')}`;
       return { ...s, supplementLogs: [...s.supplementLogs, log], activities: [act(a.byId, 'supplement', text, 'partner', log.id), ...s.activities] };
     }
     case 'addLog': {
@@ -180,7 +181,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [sync, setSync] = useState<SyncStatus>('local');
   const [syncError, setSyncError] = useState('');
-  const describe = (e: unknown) => { const m = (e as any)?.message ?? String(e); return /Network request failed|fetch/i.test(m) ? '网络不通' : m.slice(0, 80); };
+  const describe = (e: unknown) => { const m = (e as any)?.message ?? String(e); return /Network request failed|fetch/i.test(m) ? tr('网络不通') : m.slice(0, 80); };
   const hydrated = useRef(false);
   const lastSynced = useRef<AppState>(emptyState); // 上次与云端一致的快照
   const pushing = useRef(false);
@@ -234,10 +235,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn('[sync] push failed', e);
       const msg = describe(e);
-      setSync('offline'); setSyncError('上传失败：' + msg);
+      setSync('offline'); setSyncError(tr('上传失败：') + msg);
       failures.current += 1;
       // 不丢弃本地改动：把原因上报并显示出来，之后按 60 秒节奏继续重试
-      if (msg !== '网络不通' && failures.current <= 3) reportClientError(st.cloud.familyId, st.meId, `push: ${msg}`);
+      if (msg !== tr('网络不通') && failures.current <= 3) reportClientError(st.cloud.familyId, st.meId, `push: ${msg}`);
     } finally {
       pushing.current = false;
       if (stateRef.current !== lastSynced.current && stateRef.current.cloud) setTimeout(push, failures.current ? 60_000 : 3000);
@@ -283,8 +284,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn('[sync] pull failed', e);
       const msg = describe(e);
-      setSync('offline'); setSyncError('下载失败：' + msg);
-      if (msg !== '网络不通') reportClientError(st.cloud.familyId, st.meId, `pull: ${msg}`);
+      setSync('offline'); setSyncError(tr('下载失败：') + msg);
+      if (msg !== tr('网络不通')) reportClientError(st.cloud.familyId, st.meId, `pull: ${msg}`);
     }
   };
   useEffect(() => {

@@ -7,6 +7,7 @@ import { useDerived, useStore } from '../src/store/store';
 import { Body2, Button, Caption, Screen } from '../src/components/ui';
 import { colors, space } from '../src/theme';
 import { uid } from '../src/lib/pregnancy';
+import { tr } from '../src/i18n';
 
 const SESSION_MIN = 60;
 
@@ -32,8 +33,8 @@ export default function Kicks() {
     const mins = Math.max(1, Math.round(elapsed / 60));
     dispatch({
       type: 'addLog',
-      log: { id: uid(), kind: 'kick', date: today, value: count, text: `用时 ${mins} 分钟`, byId: me.id, at: new Date().toISOString(), visibility: 'partner' },
-      activity: `数了胎动 ${count} 次（${mins} 分钟）`,
+      log: { id: uid(), kind: 'kick', date: today, value: count, text: tr('用时 {m} 分钟', { m: mins }), byId: me.id, at: new Date().toISOString(), visibility: 'partner' },
+      activity: tr('数了胎动 {n} 次（{m} 分钟）', { n: count, m: mins }),
     });
     router.back();
   };
@@ -53,7 +54,7 @@ export default function Kicks() {
   return (
     <Screen style={{ padding: space.lg }}>
       <Body2 style={{ textAlign: 'center', marginTop: space.md }}>
-        宝宝动一下就按一下。连续的一串动算一次。{'\n'}早、中、晚各数 1 小时，每小时 3 次以上通常是正常的。
+        {tr('宝宝动一下就按一下。连续的一串动算一次。')}{'\n'}{tr('早、中、晚各数 1 小时，每小时 3 次以上通常是正常的。')}
       </Body2>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Pressable
@@ -63,16 +64,16 @@ export default function Kicks() {
           {({ pressed }) => (
             <>
               <Text style={{ fontSize: 96, fontWeight: '700', color: pressed ? colors.onPine : colors.pine, fontVariant: ['tabular-nums'], lineHeight: 104 }}>{count}</Text>
-              <Text style={{ fontSize: 18, color: pressed ? colors.onPine : colors.pine, fontWeight: '600' }}>{startedAt ? '动了，按一下' : '按这里开始'}</Text>
+              <Text style={{ fontSize: 18, color: pressed ? colors.onPine : colors.pine, fontWeight: '600' }}>{startedAt ? tr('动了，按一下') : tr('按这里开始')}</Text>
             </>
           )}
         </Pressable>
         <Text style={{ marginTop: space.xl, fontSize: 28, color: colors.ink2, fontVariant: ['tabular-nums'] }}>{mm}:{ss}</Text>
-        <Caption>屏幕会保持常亮 · 满 60 分钟自动保存</Caption>
+        <Caption>{tr('屏幕会保持常亮 · 满 60 分钟自动保存')}</Caption>
       </View>
       <View style={{ gap: 10, marginBottom: space.xl }}>
-        <Button title={startedAt ? `结束并保存（${count} 次）` : '返回'} onPress={startedAt ? finish : () => router.back()} />
-        {startedAt && <Button title="放弃这次" kind="ghost" onPress={() => router.back()} />}
+        <Button title={startedAt ? `结束并保存（${count} 次）` : tr('返回')} onPress={startedAt ? finish : () => router.back()} />
+        {startedAt && <Button title={tr("放弃这次")} kind="ghost" onPress={() => router.back()} />}
       </View>
     </Screen>
   );

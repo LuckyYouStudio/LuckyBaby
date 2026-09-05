@@ -12,8 +12,9 @@ import { addDays, dueFromLmp, today, uid } from '../src/lib/pregnancy';
 import { cloudEnabled, ensureSession } from '../src/lib/supabase';
 import { createFamilyRemote, joinFamilyRemote, pullAll } from '../src/store/sync';
 import type { Role } from '../src/data/types';
+import { tr } from '../src/i18n';
 
-const RELATIONS = ['老公', '妈妈', '爸爸', '婆婆', '公公', '姐姐', '妹妹', '哥哥', '弟弟', '闺蜜'];
+const RELATIONS = (): any[] => [tr('老公'), tr('妈妈'), tr('爸爸'), tr('婆婆'), tr('公公'), tr('姐姐'), tr('妹妹'), tr('哥哥'), tr('弟弟'), tr('闺蜜')];
 
 function Choice<T extends string>({ value, options, onChange }: { value: T; options: { v: T; t: string; d?: string; fg?: string; bg?: string }[]; onChange: (v: T) => void }) {
   return (
@@ -53,11 +54,11 @@ export default function Onboarding() {
   const paste = async () => {
     const t = await Clipboard.getStringAsync();
     const c = extractCode(t);
-    if (c) setCode(c); else alert('剪贴板里没有邀请码', '让家人把 6 位邀请码或邀请链接发给你，复制后再点粘贴。');
+    if (c) setCode(c); else alert(tr('剪贴板里没有邀请码'), tr('让家人把 6 位邀请码或邀请链接发给你，复制后再点粘贴。'));
   };
   const [jname, setJname] = useState('');
   const [role, setRole] = useState<Role>('dad');
-  const [relation, setRelation] = useState('老公');
+  const [relation, setRelation] = useState(tr('老公'));
   const validJoin = code.trim().length >= 6 && jname.trim().length > 0;
 
   const create = async () => {
@@ -71,16 +72,16 @@ export default function Onboarding() {
       const r = await createFamilyRemote(pregnancy, me.id);
       dispatch({ type: 'setup', pregnancy, me: { ...me, id: r.member_id }, familyCode: r.invite_code, cloud: { familyId: r.family_id, userId } });
     } catch (e: any) {
-      alert('连不上云端', `${e?.message ?? e}\n\n可以先在本机使用，之后再开云同步。`, [
-        { text: '取消' },
-        { text: '先本机使用', onPress: () => dispatch({ type: 'setup', pregnancy, me }) },
+      alert(tr('连不上云端'), `${e?.message ?? e}\n\n可以先在本机使用，之后再开云同步。`, [
+        { text: tr('取消') },
+        { text: tr('先本机使用'), onPress: () => dispatch({ type: 'setup', pregnancy, me }) },
       ]);
     } finally { setBusy(false); }
   };
 
   const join = async () => {
     if (!validJoin) return;
-    if (!cloudEnabled) { alert('云同步未配置', '请先在 .env 里填 Supabase 地址和密钥。'); return; }
+    if (!cloudEnabled) { alert(tr('云同步未配置'), tr('请先在 .env 里填 Supabase 地址和密钥。')); return; }
     setBusy(true);
     try {
       const userId = await ensureSession();
@@ -89,7 +90,7 @@ export default function Onboarding() {
       const me = slices.members.find((m) => m.id === r.memberId) ?? { id: r.memberId, name: jname.trim(), role, relation, joinedAt: new Date().toISOString() };
       dispatch({ type: 'joinFamily', pregnancy: r.pregnancy, me, familyCode: r.inviteCode, cloud: { familyId: r.familyId, userId }, slices });
     } catch (e: any) {
-      alert('没能加入', String(e?.message ?? e));
+      alert(tr('没能加入'), String(e?.message ?? e));
     } finally { setBusy(false); }
   };
 
@@ -97,51 +98,51 @@ export default function Onboarding() {
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: space.xl, paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
-          <Caption style={{ marginBottom: 8 }}>幸运宝贝 · 一家人一起记录的孕期</Caption>
-          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? '你好，准妈妈' : '加入她的孕期'}</H1>
+          <Caption style={{ marginBottom: 8 }}>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
+          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? tr('你好，准妈妈') : tr('加入她的孕期')}</H1>
 
-          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: '我是准妈妈', d: '建立家庭' }, { v: 'join', t: '我有邀请码', d: '准爸爸 / 家人' }]} />
+          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我是准妈妈'), d: tr('建立家庭') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
 
           {flow === 'create' ? (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>先由你建立这个家庭。之后用邀请码把准爸爸和家人加进来，他们能看到什么由你决定。</Body2>
-              <Field label="你的称呼" value={name} onChange={setName} placeholder="例如：小雨" />
-              <Caption style={{ marginBottom: 6 }}>推算孕周的方式</Caption>
-              <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: '末次月经' }, { v: 'due', t: '医生给的预产期' }]} />
-              <Field label={mode === 'lmp' ? '末次月经第一天（YYYY-MM-DD）' : '预产期（YYYY-MM-DD）'} value={date} onChange={setDate} placeholder="2026-06-26" keyboardType="numeric" />
-              {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>预产期 {dueDate}</Body>}
-              <Field label="宝宝小名（可选）" value={nick} onChange={setNick} placeholder="例如：小豆子" />
-              {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title="建立家庭" onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
+              <Body2 style={{ marginBottom: space.xl }}>{tr('先由你建立这个家庭。之后用邀请码把准爸爸和家人加进来，他们能看到什么由你决定。')}</Body2>
+              <Field label={tr("你的称呼")} value={name} onChange={setName} placeholder={tr("例如：小雨")} />
+              <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
+              <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: tr('末次月经') }, { v: 'due', t: tr('医生给的预产期') }]} />
+              <Field label={mode === 'lmp' ? tr('末次月经第一天（YYYY-MM-DD）') : tr('预产期（YYYY-MM-DD）')} value={date} onChange={setDate} placeholder="2026-06-26" keyboardType="numeric" />
+              {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>{tr('预产期')} {dueDate}</Body>}
+              <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />
+              {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title={tr("建立家庭")} onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
             </>
           ) : (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>让准妈妈把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。</Body2>
-              <Field label="邀请码" value={code} onChange={(t) => setCode(t.toUpperCase())} placeholder="例如：TY7K2Q" />
+              <Body2 style={{ marginBottom: space.xl }}>{tr('让准妈妈把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。')}</Body2>
+              <Field label={tr("邀请码")} value={code} onChange={(t) => setCode(t.toUpperCase())} placeholder={tr("例如：TY7K2Q")} />
               <Row style={{ gap: 8, marginTop: -8, marginBottom: space.lg }}>
-                <Button title="粘贴邀请码" small kind="ghost" onPress={paste} />
-                <Button title="扫二维码" small kind="ghost" onPress={() => router.push('/scan' as never)} />
+                <Button title={tr("粘贴邀请码")} small kind="ghost" onPress={paste} />
+                <Button title={tr("扫二维码")} small kind="ghost" onPress={() => router.push('/scan' as never)} />
               </Row>
-              <Field label="你的称呼" value={jname} onChange={setJname} placeholder={role === 'dad' ? '例如：阿强' : '例如：外婆'} />
-              <Caption style={{ marginBottom: 6 }}>你是</Caption>
-              <Choice value={role} onChange={(r) => { setRole(r); setRelation(r === 'dad' ? '老公' : ''); }} options={[
-                { v: 'dad', t: '准爸爸', d: '能记录、打卡、陪产检', fg: roleColor.dad.fg, bg: roleColor.dad.bg },
-                { v: 'family', t: '家人', d: '看动态和产检日程', fg: roleColor.family.fg, bg: roleColor.family.bg },
+              <Field label={tr("你的称呼")} value={jname} onChange={setJname} placeholder={role === 'dad' ? tr('例如：阿强') : tr('例如：外婆')} />
+              <Caption style={{ marginBottom: 6 }}>{tr('你是')}</Caption>
+              <Choice value={role} onChange={(r) => { setRole(r); setRelation(r === 'dad' ? tr('老公') : ''); }} options={[
+                { v: 'dad', t: tr('准爸爸'), d: tr('能记录、打卡、陪产检'), fg: roleColor.dad.fg, bg: roleColor.dad.bg },
+                { v: 'family', t: tr('家人'), d: tr('看动态和产检日程'), fg: roleColor.family.fg, bg: roleColor.family.bg },
               ]} />
-              <Caption style={{ marginBottom: 6 }}>和准妈妈的关系</Caption>
+              <Caption style={{ marginBottom: 6 }}>{tr('和准妈妈的关系')}</Caption>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: space.xl }}>
-                {RELATIONS.map((t) => (
+                {RELATIONS().map((t) => (
                   <Pressable key={t} onPress={() => setRelation(t)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: relation === t ? colors.pineSoft : colors.paper2 }}>
                     <Text style={{ color: relation === t ? colors.pine : colors.ink2 }}>{t}</Text>
                   </Pressable>
                 ))}
               </View>
-              {busy ? <ActivityIndicator color={colors.pine} /> : <Button title="加入家庭" onPress={join} disabled={!validJoin} />}
+              {busy ? <ActivityIndicator color={colors.pine} /> : <Button title={tr("加入家庭")} onPress={join} disabled={!validJoin} />}
             </>
           )}
 
-          <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{cloudEnabled ? '数据只在你的家庭内可见。不做社区，不做广告，不卖数据。' : '数据只存在你的手机里。不做社区，不做广告，不卖数据。'}</Caption>
+          <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{cloudEnabled ? tr('数据只在你的家庭内可见。不做社区，不做广告，不卖数据。') : tr('数据只存在你的手机里。不做社区，不做广告，不卖数据。')}</Caption>
           <Pressable onPress={() => dispatch({ type: 'seedDemo' })} style={{ marginTop: space.xl, alignItems: 'center' }}>
-            <Caption style={{ color: colors.pine, fontWeight: '700' }}>先用示例家庭看看</Caption>
+            <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('先用示例家庭看看')}</Caption>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>

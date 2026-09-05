@@ -51,30 +51,34 @@ export function trimester(week: number): 1 | 2 | 3 {
   return 3;
 }
 
+const EN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export function fmtDate(s?: string): string {
-  if (!s) return '未定';
+  if (!s) return getLang() === 'en' ? 'TBD' : '未定';
   const d = parseYmd(s);
-  return `${d.getMonth() + 1}月${d.getDate()}日`;
+  return getLang() === 'en' ? `${EN_MONTHS[d.getMonth()]} ${d.getDate()}` : `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
 export function fmtRelative(s: string): string {
   const diff = Math.round((parseYmd(s).getTime() - parseYmd(today()).getTime()) / DAY);
-  if (diff === 0) return '今天';
-  if (diff === 1) return '明天';
-  if (diff === -1) return '昨天';
-  if (diff > 0) return `${diff} 天后`;
-  return `${-diff} 天前`;
+  const en = getLang() === 'en';
+  if (diff === 0) return en ? 'today' : '今天';
+  if (diff === 1) return en ? 'tomorrow' : '明天';
+  if (diff === -1) return en ? 'yesterday' : '昨天';
+  if (diff > 0) return en ? `in ${diff} days` : `${diff} 天后`;
+  return en ? `${-diff} days ago` : `${-diff} 天前`;
 }
 
 export function fmtTime(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
   const hh = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  if (toYmd(d) === toYmd(now)) return `今天 ${hh}`;
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${hh}`;
+  const en = getLang() === 'en';
+  if (toYmd(d) === toYmd(now)) return en ? `Today ${hh}` : `今天 ${hh}`;
+  return en ? `${EN_MONTHS[d.getMonth()]} ${d.getDate()} ${hh}` : `${d.getMonth() + 1}月${d.getDate()}日 ${hh}`;
 }
 
 import * as Crypto from 'expo-crypto';
+import { getLang } from '../i18n';
 
 /** UUID v4，与云端主键一致 */
 export function uid(): string {

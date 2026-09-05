@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import type { AppState } from '../data/types';
 import { gestation, parseYmd, today } from './pregnancy';
 import { needsFasting } from '../data/schedule';
+import { tr } from '../i18n';
 
 const supported = Platform.OS !== 'web';
 
@@ -37,18 +38,18 @@ export async function rescheduleReminders(state: AppState) {
       if (c.done || !c.date || c.date < t) continue;
       const d = parseYmd(c.date);
       const bring = (c.bringItems ?? []).filter((b) => !b.done).map((b) => b.text).join('、');
-      const fasting = needsFasting(c.notes) ? '记得空腹。' : '';
+      const fasting = needsFasting(c.notes) ? tr('记得空腹。') : '';
       const eve = new Date(d); eve.setDate(eve.getDate() - 1); eve.setHours(20, 0, 0, 0);
       const morn = new Date(d); morn.setHours(8, 0, 0, 0);
       if (eve > now) {
         await Notifications.scheduleNotificationAsync({
-          content: { title: `明天产检：${c.title}`, body: `${fasting}${c.hospital ? c.hospital + '。' : ''}${bring ? '带上：' + bring : ''}`.trim() || '看看要带什么', data: { checkupId: c.id } },
+          content: { title: `明天产检：${c.title}`, body: `${fasting}${c.hospital ? c.hospital + '。' : ''}${bring ? tr('带上：') + bring : ''}`.trim() || tr('看看要带什么'), data: { checkupId: c.id } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: eve },
         });
       }
       if (morn > now) {
         await Notifications.scheduleNotificationAsync({
-          content: { title: `今天产检：${c.title}`, body: `${fasting}${bring ? '出门前检查：' + bring : '祝顺利'}`, data: { checkupId: c.id } },
+          content: { title: `今天产检：${c.title}`, body: `${fasting}${bring ? tr('出门前检查：') + bring : tr('祝顺利')}`, data: { checkupId: c.id } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: morn },
         });
       }
@@ -67,7 +68,7 @@ export async function rescheduleReminders(state: AppState) {
         const at = new Date(); at.setHours((hh || 8) + 2, mm || 0, 0, 0);
         if (at <= now) continue;
         await Notifications.scheduleNotificationAsync({
-          content: { title: `${state.pregnancy.momName}今天的${s.name}还没记`, body: '问问她吃了没，或者你替她记一下', data: { supplementId: s.id, nudge: true } },
+          content: { title: `${state.pregnancy.momName}今天的${s.name}还没记`, body: tr('问问她吃了没，或者你替她记一下'), data: { supplementId: s.id, nudge: true } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
         });
       }
@@ -76,7 +77,7 @@ export async function rescheduleReminders(state: AppState) {
       for (const s of due) {
         const [hh, mm] = (s.timeOfDay || '08:00').split(':').map(Number);
         await Notifications.scheduleNotificationAsync({
-          content: { title: `该吃${s.name}了`, body: `${s.dose}${s.note ? ' · ' + s.note : ''}`, data: { supplementId: s.id } },
+          content: { title: tr('该吃{name}了', { name: tr(s.name) }), body: `${tr(s.dose)}${s.note ? ' · ' + tr(s.note) : ''}`, data: { supplementId: s.id } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh || 8, minute: mm || 0 },
         });
       }

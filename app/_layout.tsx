@@ -22,7 +22,7 @@ function Gate() {
 
   useEffect(() => {
     if (!ready) return;
-    const inOnboarding = ['onboarding', 'demo', 'join', 'scan'].includes(segments[0]);
+    const inOnboarding = ['onboarding', 'demo', 'join', 'scan', 'auth'].includes(segments[0]);
     if (!state.onboarded && !inOnboarding) router.replace('/onboarding');
     if (state.onboarded && inOnboarding) router.replace('/');
   }, [ready, state.onboarded, segments]);
@@ -53,6 +53,7 @@ function Gate() {
       <Stack.Screen name="invite" options={{ title: tr('邀请家人'), presentation: 'modal' }} />
       <Stack.Screen name="scan" options={{ title: tr('扫码加入'), presentation: 'fullScreenModal' }} />
       <Stack.Screen name="join" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
     </Stack>
     </>
   );

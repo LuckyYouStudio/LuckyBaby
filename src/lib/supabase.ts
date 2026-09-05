@@ -10,7 +10,7 @@ const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 export const supabase: SupabaseClient | null =
   url && anon && url.startsWith('http')
     ? createClient(url, anon, {
-        auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+        auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false, flowType: 'pkce' },
       })
     : null;
 

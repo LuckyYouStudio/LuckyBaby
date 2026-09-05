@@ -12,7 +12,8 @@ import { colors, roleColor, space } from '../src/theme';
 import { addDays, dueFromLmp, today, uid } from '../src/lib/pregnancy';
 import { cloudEnabled, ensureSession } from '../src/lib/supabase';
 import { createFamilyRemote, joinFamilyRemote, myFamilyRemote, pullAll } from '../src/store/sync';
-import { signInWithApple } from '../src/lib/account';
+import { restoreEmailStart, signInWithApple } from '../src/lib/account';
+import { EmailOtp } from '../src/components/EmailOtp';
 import type { Role } from '../src/data/types';
 import { tr } from '../src/i18n';
 
@@ -40,6 +41,7 @@ export default function Onboarding() {
   const router = useRouter();
   const params = useLocalSearchParams<{ code?: string }>();
   const [flow, setFlow] = useState<'create' | 'join'>(params.code ? 'join' : 'create');
+  const [restoreMode, setRestoreMode] = useState(false);
   const [busy, setBusy] = useState(false);
 
   // 建立家庭
@@ -81,6 +83,14 @@ export default function Onboarding() {
     } finally { setBusy(false); }
   };
 
+  const finishRestore = async (userId: string) => {
+    const mine = await myFamilyRemote();
+    if (!mine) { alert(tr('这个账号还没有绑定过家庭'), tr('如果你是准妈妈，请建立家庭；如果是家人，请用邀请码加入。')); return; }
+    const slices = await pullAll(mine.familyId);
+    const me = slices.members.find((m) => m.id === mine.memberId);
+    if (!me) throw new Error('member missing');
+    dispatch({ type: 'joinFamily', pregnancy: mine.pregnancy, me, familyCode: mine.inviteCode, cloud: { familyId: mine.familyId, userId, bound: true }, slices });
+  };
   const restore = async () => {
     if (!cloudEnabled) return;
     setBusy(true);
@@ -163,10 +173,20 @@ export default function Onboarding() {
           )}
 
           <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{cloudEnabled ? tr('数据只在你的家庭内可见。不做社区，不做广告，不卖数据。') : tr('数据只存在你的手机里。不做社区，不做广告，不卖数据。')}</Caption>
-          {cloudEnabled && Platform.OS === 'ios' && (
-            <Pressable onPress={restore} style={{ marginTop: space.lg, alignItems: 'center' }} disabled={busy}>
-              <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('换了手机？用 Apple 登录恢复')}</Caption>
-            </Pressable>
+          {cloudEnabled && (
+            <View style={{ marginTop: space.lg, alignItems: 'center' }}>
+              {Platform.OS === 'ios' && (
+                <Pressable onPress={restore} disabled={busy}>
+                  <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('换了手机？用 Apple 登录恢复')}</Caption>
+                </Pressable>
+              )}
+              <Pressable onPress={() => setRestoreMode((v) => !v)} disabled={busy} style={{ marginTop: 8 }}>
+                <Caption style={{ color: colors.pine, fontWeight: '700' }}>{Platform.OS === 'ios' ? tr('或用邮箱链接恢复') : tr('换了手机？用邮箱链接恢复')}</Caption>
+              </Pressable>
+            </View>
+          )}
+          {cloudEnabled && restoreMode && (
+            <EmailOtp sendLabel={tr('发登录链接')} onSend={restoreEmailStart} />
           )}
           <Pressable onPress={() => dispatch({ type: 'seedDemo' })} style={{ marginTop: space.xl, alignItems: 'center' }}>
             <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('先用示例家庭看看')}</Caption>

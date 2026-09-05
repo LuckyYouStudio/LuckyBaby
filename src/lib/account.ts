@@ -53,3 +53,41 @@ export async function deleteAccount(): Promise<void> {
   if (data && (data as any).error) throw new Error((data as any).error);
   await supabase.auth.signOut();
 }
+
+// ---------- 邮箱链接（iOS / 安卓通用；免费版 Supabase 不能发验证码，改为点链接） ----------
+export const AUTH_REDIRECT = 'luckybaby://auth';
+
+/** 匿名账号绑定邮箱：发确认链接（匿名用户升级为正式用户，id 不变） */
+export async function bindEmailStart(email: string) {
+  if (!supabase) throw new Error(tr('云同步未配置'));
+  const { error } = await supabase.auth.updateUser({ email: email.trim().toLowerCase() }, { emailRedirectTo: AUTH_REDIRECT });
+  if (error) throw error;
+}
+
+/** 换机恢复：发登录链接 */
+export async function restoreEmailStart(email: string) {
+  if (!supabase) throw new Error(tr('云同步未配置'));
+  const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { emailRedirectTo: AUTH_REDIRECT, shouldCreateUser: false } });
+  if (error) throw error;
+}
+
+/** 处理邮件链接打开 App：luckybaby://auth?code=... → 建立会话，返回 userId */
+export async function completeEmailLink(url: string): Promise<string> {
+  if (!supabase) throw new Error(tr('云同步未配置'));
+  const code = url.match(/[?&]code=([^&#]+)/)?.[1];
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(decodeURIComponent(code));
+    if (error || !data.user) throw error ?? new Error(tr('链接无效或已过期'));
+    return data.user.id;
+  }
+  // 兼容 implicit 形式：#access_token=...&refresh_token=...
+  const frag = url.split('#')[1] ?? '';
+  const q = Object.fromEntries(frag.split('&').map((kv) => kv.split('=').map(decodeURIComponent) as [string, string]));
+  if (q.access_token && q.refresh_token) {
+    const { data, error } = await supabase.auth.setSession({ access_token: q.access_token, refresh_token: q.refresh_token });
+    if (error || !data.user) throw error ?? new Error(tr('链接无效或已过期'));
+    return data.user.id;
+  }
+  if (q.error_description) throw new Error(decodeURIComponent(q.error_description));
+  throw new Error(tr('链接无效或已过期'));
+}

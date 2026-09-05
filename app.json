@@ -14,13 +14,32 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#DFF0E9",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.luckyyoustudio.luckybaby"
+      "package": "com.luckyyoustudio.luckybaby",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "luckybaby",
+              "host": "join"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +65,20 @@
         }
       ],
       "expo-localization",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Boy",
+            "ios": "./assets/icon-boy.png",
+            "android": {
+              "foregroundImage": "./assets/android-icon-boy-foreground.png",
+              "backgroundColor": "#DFF0E9"
+            }
+          }
+        ]
+      ]
     ],
     "scheme": "luckybaby",
     "experiments": {

@@ -7,7 +7,9 @@ import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Pill, Row, Screen, Section } from '../../src/components/ui';
 import { Feed } from '../../src/components/Feed';
 import { LangToggle } from '../../src/components/LangToggle';
-import { bindApple, deleteAccount } from '../../src/lib/account';
+import { bindApple, bindEmailStart, deleteAccount } from '../../src/lib/account';
+import { EmailOtp } from '../../src/components/EmailOtp';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, roleColor, space } from '../../src/theme';
 import { tr } from '../../src/i18n';
@@ -19,6 +21,7 @@ export default function Family() {
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [emailMode, setEmailMode] = useState(false);
   const bind = async () => {
     setBusy(true);
     try {
@@ -153,8 +156,16 @@ export default function Family() {
                 <Body style={{ fontWeight: '700' }}>{state.cloud.bound ? tr('账号已绑定 Apple ID') : tr('绑定账号，换手机不丢')}</Body>
                 <Caption>{state.cloud.bound ? tr('换手机时在首页用 Apple 登录即可恢复。') : tr('现在的数据只认这台手机。绑定 Apple ID 后，换手机或重装都能找回。')}</Caption>
               </View>
-              {!state.cloud.bound && <Button title={busy ? '…' : tr('通过 Apple 绑定')} small onPress={bind} disabled={busy} />}
+              {!state.cloud.bound && Platform.OS === 'ios' && <Button title={busy ? '…' : tr('通过 Apple 绑定')} small onPress={bind} disabled={busy} />}
             </Row>
+            {!state.cloud.bound && !emailMode && (
+              <Pressable onPress={() => setEmailMode(true)} style={{ marginTop: space.sm }}>
+                <Caption style={{ color: colors.pine, fontWeight: '700' }}>{Platform.OS === 'ios' ? tr('或用邮箱绑定（安卓也能用）') : tr('用邮箱绑定')}</Caption>
+              </Pressable>
+            )}
+            {!state.cloud.bound && emailMode && (
+              <EmailOtp sendLabel={tr('发绑定链接')} onSend={bindEmailStart} />
+            )}
             {state.cloud.bound && (
               <Pressable onPress={removeAccount} style={{ marginTop: space.sm }}>
                 <Caption style={{ color: colors.warn }}>{tr('删除账号')}</Caption>

@@ -1,0 +1,16 @@
+{
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "ios": { "simulator": false },
+      "env": { "EXPO_PUBLIC_SUPABASE_URL": "https://wpjmmgqqdyycmxlnnkfd.supabase.co" }
+    },
+    "production": {
+      "android": { "buildType": "app-bundle" },
+      "env": { "EXPO_PUBLIC_SUPABASE_URL": "https://wpjmmgqqdyycmxlnnkfd.supabase.co" }
+    }
+  },
+  "submit": { "production": {} }
+}

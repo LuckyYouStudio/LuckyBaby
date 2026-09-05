@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Image } from 'react-native';
+import { getAppIconName, setAlternateAppIcon, resetAppIcon, supportsAlternateIcons } from 'expo-alternate-app-icons';
+import { alert } from '../src/lib/alert';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useStore } from '../src/store/store';
 import { Body, Body2, Caption, Card, Screen, Section } from '../src/components/ui';
@@ -10,6 +13,23 @@ export default function Settings() {
   const theme = state.settings?.theme ?? 'system';
   const scale = state.settings?.fontScale ?? 1;
   const langPref = state.settings?.lang ?? 'system';
+  const [icon, setIcon] = useState<'girl' | 'boy'>('girl');
+  useEffect(() => { try { setIcon(getAppIconName() === 'Boy' ? 'boy' : 'girl'); } catch {} }, []);
+  const pickIcon = async (v: 'girl' | 'boy') => {
+    try {
+      if (v === 'boy') await setAlternateAppIcon('Boy'); else await resetAppIcon();
+      setIcon(v);
+    } catch (e: any) { alert(tr('换图标失败'), String(e?.message ?? e)); }
+  };
+  const IconOpt = ({ v, src, label }: { v: 'girl' | 'boy'; src: number; label: string }) => {
+    const on = icon === v;
+    return (
+      <Pressable onPress={() => pickIcon(v)} style={{ flex: 1, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: on ? colors.pine : colors.line, backgroundColor: on ? colors.pineSoft : colors.card, alignItems: 'center' }}>
+        <Image source={src} style={{ width: 64, height: 64, borderRadius: 14 }} />
+        <Text style={{ fontWeight: '700', color: on ? colors.pine : colors.ink2, marginTop: 6 }}>{label}</Text>
+      </Pressable>
+    );
+  };
   const Opt = ({ value, cur, label, hint, onPick }: { value: string | number; cur: string | number; label: string; hint?: string; onPick: (v: never) => void }) => {
     const on = value === cur;
     return (
@@ -36,6 +56,15 @@ export default function Settings() {
             <Opt value="en" cur={langPref} label="English" onPick={(v: 'system' | 'zh' | 'en') => dispatch({ type: 'setSettings', settings: { lang: v } })} />
           </View>
         </Section>
+        {supportsAlternateIcons && (
+          <Section title={tr('App 图标')}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <IconOpt v="girl" src={require('../assets/icon.png')} label={tr('小女孩')} />
+              <IconOpt v="boy" src={require('../assets/icon-boy.png')} label={tr('小男孩')} />
+            </View>
+            <Caption style={{ marginTop: 6 }}>{tr('桌面上的图标会跟着换。')}</Caption>
+          </Section>
+        )}
         <Section title={tr("字号")}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Opt value={1} cur={scale} label={tr("标准")} onPick={(v: number) => dispatch({ type: 'setSettings', settings: { fontScale: v } })} />

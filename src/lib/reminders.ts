@@ -63,6 +63,8 @@ export async function rescheduleReminders(state: AppState) {
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh || 8, minute: mm || 0 },
       });
     }
+    const pending = await Notifications.getAllScheduledNotificationsAsync();
+    console.log(`[reminders] scheduled ${pending.length}:`, pending.map((n) => n.content.title).join(' | '));
   } catch (e) {
     console.warn('[reminders]', e);
   } finally {

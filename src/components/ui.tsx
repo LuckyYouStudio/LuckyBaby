@@ -30,7 +30,7 @@ export function Card({ children, style, onPress }: { children: React.ReactNode; 
   const inner = <View style={[s.card, style]}>{children}</View>;
   if (!onPress) return inner;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, flex: (style as any)?.flex }]}>
       {inner}
     </Pressable>
   );

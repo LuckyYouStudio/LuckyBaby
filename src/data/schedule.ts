@@ -47,6 +47,11 @@ export const PACKING_TEMPLATE: { group: string; text: string }[] = [
   { group: '宝宝', text: 'NB 码纸尿裤' }, { group: '宝宝', text: '连体衣 2–3 套、包被' }, { group: '宝宝', text: '奶瓶、少量奶粉（备用）' }, { group: '宝宝', text: '湿巾、纱布巾、棉柔巾' }, { group: '宝宝', text: '出院用的安全提篮 / 抱被' },
 ];
 
+/** 待产包默认清单，id 固定，便于未初始化时也能勾选 */
+export function defaultPacking() {
+  return PACKING_TEMPLATE.map((t, i) => ({ ...t, id: `tpl${i}`, done: false }));
+}
+
 export function metricFlag(key: string, value: number): 'ok' | 'high' | 'low' | 'na' {
   const d = METRIC_DEFS.find((m) => m.key === key);
   if (!d || (d.low === undefined && d.high === undefined)) return 'na';

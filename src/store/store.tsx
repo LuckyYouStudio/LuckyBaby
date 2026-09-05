@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Supplement, SupplementLog, Visibility } from '../data/types';
-import { CHECKUP_TEMPLATES, PACKING_TEMPLATE, defaultBring } from '../data/schedule';
+import { CHECKUP_TEMPLATES, defaultBring, defaultPacking } from '../data/schedule';
 import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { dateOfWeek, gestation, today, uid } from '../lib/pregnancy';
 import { demoState } from './demo';
@@ -144,11 +144,11 @@ function reducer(s: AppState, a: Action): AppState {
     case 'setReminders':
       return { ...s, remindersEnabled: a.enabled };
     case 'togglePacking': {
-      const packing = (s.packing && s.packing.length ? s.packing : PACKING_TEMPLATE.map((t) => ({ ...t, id: uid(), done: false })));
+      const packing = (s.packing && s.packing.length ? s.packing : defaultPacking());
       return { ...s, packing: packing.map((p) => (p.id !== a.id ? p : { ...p, done: !p.done, byId: p.done ? undefined : a.byId })) };
     }
     case 'addPacking': {
-      const packing = (s.packing && s.packing.length ? s.packing : PACKING_TEMPLATE.map((t) => ({ ...t, id: uid(), done: false })));
+      const packing = (s.packing && s.packing.length ? s.packing : defaultPacking());
       return { ...s, packing: [...packing, { id: uid(), group: a.group, text: a.text, done: false }] };
     }
     default:

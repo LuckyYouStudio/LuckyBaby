@@ -24,6 +24,7 @@ function Gate() {
         headerTintColor: colors.ink,
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: '700' },
+        headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.paper },
       }}
     >

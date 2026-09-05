@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useDerived, useStore } from '../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Field, Row, Screen, Section } from '../src/components/ui';
 import { colors, space } from '../src/theme';
-import { PACKING_TEMPLATE } from '../src/data/schedule';
+import { defaultPacking } from '../src/data/schedule';
 import type { PackingItem } from '../src/data/types';
 
 /** 待产包：全家一起准备，准爸爸可以认领 */
@@ -13,7 +13,7 @@ export default function Packing() {
   const [adding, setAdding] = useState<string | null>(null);
   const [text, setText] = useState('');
   if (!me) return null;
-  const items: PackingItem[] = state.packing && state.packing.length ? state.packing : PACKING_TEMPLATE.map((t, i) => ({ ...t, id: `tpl${i}`, done: false }));
+  const items: PackingItem[] = state.packing && state.packing.length ? state.packing : defaultPacking();
   const groups = ['证件', '妈妈', '宝宝'];
   const done = items.filter((i) => i.done).length;
   const readonly = me.role === 'family';

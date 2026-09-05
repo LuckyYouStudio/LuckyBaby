@@ -289,3 +289,13 @@ begin
   return json_build_object('family_id', fid, 'invite_code', code, 'member_id', p_member_id);
 end $$;
 grant execute on function create_family(date, date, text, text, uuid, text) to authenticated;
+-- 客户端同步错误上报（排查用）
+create table if not exists client_errors (
+  id uuid primary key default gen_random_uuid(),
+  family_id uuid references families(id) on delete cascade,
+  member_id uuid,
+  message text not null,
+  at timestamptz default now()
+);
+alter table client_errors enable row level security;
+create policy "member reports errors" on client_errors for insert with check (my_role(family_id) is not null);

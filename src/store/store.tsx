@@ -7,7 +7,7 @@ import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { dateOfWeek, gestation, today, uid } from '../lib/pregnancy';
 import { demoState } from './demo';
 import { cloudEnabled, ensureSession } from '../lib/supabase';
-import { myFamilyRemote, pullAll, pushDiff, subscribe, type CloudInfo, type RemoteSlices } from './sync';
+import { myFamilyRemote, pullAll, pushDiff, reportClientError, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 import { cancelReminders, rescheduleReminders } from '../lib/reminders';
 import { registerPushToken } from '../lib/push';
 
@@ -53,6 +53,12 @@ type Action =
   | { type: 'setSettings'; settings: Partial<NonNullable<AppState['settings']>> }
   | { type: 'togglePacking'; id: string; byId: string }
   | { type: 'addPacking'; group: string; text: string };
+
+/** 把日期编进 supplementId 的末 12 位，得到一个确定的合法 UUID */
+function logIdFor(supplementId: string, date: string) {
+  const digits = date.replace(/-/g, '').padEnd(12, '0').slice(0, 12);
+  return /^[0-9a-f-]{36}$/i.test(supplementId) ? supplementId.slice(0, 24) + digits : `${supplementId}-${date}`;
+}
 
 function act(byId: string, kind: Activity['kind'], text: string, visibility: Visibility = 'family', refId?: string): Activity {
   return { id: uid(), at: new Date().toISOString(), byId, kind, text, refId, visibility, likes: [], comments: [] };
@@ -130,7 +136,8 @@ function reducer(s: AppState, a: Action): AppState {
     case 'toggleSupplementLog': {
       const found = s.supplementLogs.find((l) => l.supplementId === a.supplementId && l.date === a.date);
       if (found) return { ...s, supplementLogs: s.supplementLogs.filter((l) => l.id !== found.id) };
-      const log: SupplementLog = { id: uid(), supplementId: a.supplementId, date: a.date, byId: a.byId, at: new Date().toISOString() };
+      // 同一补充剂同一天的打卡 id 固定：两台手机同时记也不会撞唯一约束，后写的覆盖
+      const log: SupplementLog = { id: logIdFor(a.supplementId, a.date), supplementId: a.supplementId, date: a.date, byId: a.byId, at: new Date().toISOString() };
       const sup = s.supplements.find((x) => x.id === a.supplementId);
       const by = s.members.find((m) => m.id === a.byId);
       const text = by?.role === 'mom' ? `吃了${sup?.name ?? '补充剂'}` : `帮她记了一次${sup?.name ?? '补充剂'}`;
@@ -177,6 +184,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const hydrated = useRef(false);
   const lastSynced = useRef<AppState>(emptyState); // 上次与云端一致的快照
   const pushing = useRef(false);
+  const failures = useRef(0);
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -222,10 +230,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       await pushDiff(lastSynced.current, st, st.cloud.familyId);
       lastSynced.current = st;
       AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(st)).catch(() => {});
-      setSync('synced'); setSyncError('');
+      setSync('synced'); setSyncError(''); failures.current = 0;
     } catch (e) {
       console.warn('[sync] push failed', e);
-      setSync('offline'); setSyncError('上传失败：' + describe(e));
+      const msg = describe(e);
+      setSync('offline'); setSyncError('上传失败：' + msg);
+      failures.current += 1;
+      if (msg !== '网络不通') {
+        reportClientError(st.cloud.familyId, st.meId, `push: ${msg}`);
+        // 连续 3 次同样失败：以云端为准重新对齐，避免一直卡住
+        if (failures.current >= 3) { failures.current = 0; lastSynced.current = st; AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(st)).catch(() => {}); pull(); }
+      }
     } finally {
       pushing.current = false;
       if (stateRef.current !== lastSynced.current && stateRef.current.cloud) setTimeout(push, 3000);
@@ -270,7 +285,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (stateRef.current !== lastSynced.current) push();
     } catch (e) {
       console.warn('[sync] pull failed', e);
-      setSync('offline'); setSyncError('下载失败：' + describe(e));
+      const msg = describe(e);
+      setSync('offline'); setSyncError('下载失败：' + msg);
+      if (msg !== '网络不通') reportClientError(st.cloud.familyId, st.meId, `pull: ${msg}`);
     }
   };
   useEffect(() => {

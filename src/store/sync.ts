@@ -97,13 +97,14 @@ async function diffTable<T extends { id: string }>(table: string, prev: T[], nex
   const changed = next.filter((x) => prevById.get(x.id) !== JSON.stringify(x));
   const nextIds = new Set(next.map((x) => x.id));
   const removed = prev.filter((x) => !nextIds.has(x.id)).map((x) => x.id);
-  if (changed.length) {
-    const { error } = await sb.from(table).upsert(changed.map(toRow));
-    if (error) throw error;
-  }
+  // 先删后写：避免“删掉旧行再写同一天新行”时撞唯一约束
   if (removed.length) {
     const { error } = await sb.from(table).delete().in('id', removed);
-    if (error) throw error;
+    if (error) throw new Error(`${table} 删除失败：${error.message}`);
+  }
+  if (changed.length) {
+    const { error } = await sb.from(table).upsert(changed.map(toRow));
+    if (error) throw new Error(`${table} 写入失败：${error.message}`);
   }
 }
 
@@ -130,6 +131,14 @@ export async function pushDiff(prev: AppState, next: AppState, fid: string) {
     const { error } = await supabase!.from('members').delete().in('id', removedM);
     if (error) throw error;
   }
+}
+
+// ---------- 客户端错误上报（排查同步问题用；只存文本，不含记录内容） ----------
+let lastReport = 0;
+export async function reportClientError(fid: string, memberId: string, message: string) {
+  if (!supabase || Date.now() - lastReport < 60_000) return;
+  lastReport = Date.now();
+  try { await supabase.from('client_errors').insert({ family_id: fid, member_id: memberId, message: message.slice(0, 500) }); } catch {}
 }
 
 // ---------- 实时 ----------

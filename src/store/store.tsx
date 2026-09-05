@@ -10,6 +10,7 @@ import { cloudEnabled, ensureSession } from '../lib/supabase';
 import { myFamilyRemote, pullAll, pushDiff, reportClientError, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 import { cancelReminders, rescheduleReminders } from '../lib/reminders';
 import { registerPushToken } from '../lib/push';
+import { alert } from '../lib/alert';
 import { tr } from '../i18n';
 
 const KEY = 'luckybaby.state.v1';
@@ -271,6 +272,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!st.cloud) return;
     try {
       const slices = await pullAll(st.cloud.familyId);
+      if (st.meId && !slices.members.some((m) => m.id === st.meId)) {
+        // 被创建人移出了家庭（RLS 之后什么都拉不到，members 里也没有自己）
+        dispatch({ type: 'reset' });
+        AsyncStorage.multiRemove([KEY, SYNCED_KEY]).catch(() => {});
+        lastSynced.current = emptyState;
+        alert(tr('你已被移出这个家庭'), tr('本机的记录已清空。如果是误操作，可以凭邀请码重新加入。'));
+        return;
+      }
       dispatch({ type: 'applyRemote', slices, lastSynced: lastSynced.current });
       // 合并后的状态在下一轮 effect 里成为 stateRef；把 lastSynced 推进到"服务端快照 + 本地未同步改动"
       setTimeout(() => {

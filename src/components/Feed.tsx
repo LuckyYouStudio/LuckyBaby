@@ -7,13 +7,23 @@ import { fmtTime } from '../lib/pregnancy';
 import type { Activity } from '../data/types';
 import { tr } from '../i18n';
 
+/** 系统/云端生成的固定句式按当前语言显示；用户自己写的原样 */
+function displayText(a: Activity): string {
+  const t = a.text;
+  let m = t.match(/^(.+) 加入了家庭$/);
+  if (m) return tr('{name} 加入了家庭', { name: m[1] });
+  m = t.match(/^(.+) 创建了家庭，预产期 (\S+)$/);
+  if (m) return tr('{name} 创建了家庭，预产期 {date}', { name: m[1], date: m[2] });
+  return t;
+}
+
 function Item({ a }: { a: Activity }) {
   const { state, dispatch } = useStore();
   const { me, byId } = useDerived();
   const [draft, setDraft] = useState('');
   const [open, setOpen] = useState(false);
-  const who = byId(a.byId);
-  if (!who || !me) return null;
+  const who = byId(a.byId) ?? { id: a.byId, name: tr('已移出的成员'), role: 'family' as const, joinedAt: '' };
+  if (!me) return null;
   const liked = a.likes.includes(me.id);
   const kindTone = a.kind === 'checkup' ? 'pine' : a.kind === 'supplement' ? 'apricot' : a.kind === 'family' ? 'slate' : 'grey';
   const kindText = { checkup: tr('产检'), supplement: tr('用药'), log: tr('记录'), family: tr('家庭'), system: tr('系统') }[a.kind];
@@ -29,7 +39,7 @@ function Item({ a }: { a: Activity }) {
             </Row>
             <Caption>{fmtTime(a.at)}</Caption>
           </Row>
-          <Body style={{ marginTop: 4 }}>{a.text}</Body>
+          <Body style={{ marginTop: 4 }}>{displayText(a)}</Body>
           {a.comments.map((c) => {
             const cm = byId(c.byId);
             return (

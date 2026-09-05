@@ -302,3 +302,14 @@ create policy "member reports errors" on client_errors for insert with check (my
 -- 记录类型白名单补上 contraction（宫缩计时）
 alter table daily_logs drop constraint if exists daily_logs_kind_check;
 alter table daily_logs add constraint daily_logs_kind_check check (kind in ('weight','symptom','mood','kick','note','contraction'));
+-- 移出成员时保留其记录：引用成员的外键改为 on delete set null
+alter table activities drop constraint if exists activities_by_id_fkey;
+alter table activities add constraint activities_by_id_fkey foreign key (by_id) references members(id) on delete set null;
+alter table comments drop constraint if exists comments_by_id_fkey;
+alter table comments add constraint comments_by_id_fkey foreign key (by_id) references members(id) on delete set null;
+alter table supplement_logs drop constraint if exists supplement_logs_by_id_fkey;
+alter table supplement_logs add constraint supplement_logs_by_id_fkey foreign key (by_id) references members(id) on delete set null;
+alter table daily_logs drop constraint if exists daily_logs_by_id_fkey;
+alter table daily_logs add constraint daily_logs_by_id_fkey foreign key (by_id) references members(id) on delete set null;
+alter table checkups drop constraint if exists checkups_companion_id_fkey;
+alter table checkups add constraint checkups_companion_id_fkey foreign key (companion_id) references members(id) on delete set null;

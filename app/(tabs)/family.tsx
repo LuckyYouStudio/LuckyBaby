@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Pill, Row, Screen, Section } from '../../src/components/ui';
 import { Feed } from '../../src/components/Feed';
+import { LangToggle } from '../../src/components/LangToggle';
 import { colors, roleColor, space } from '../../src/theme';
 import { tr } from '../../src/i18n';
 
@@ -47,7 +48,7 @@ export default function Family() {
           {state.cloud && (
             <Pressable onPress={refresh} style={{ marginTop: 6 }}>
               <Caption style={{ color: sync === 'offline' ? colors.warn : colors.pine }}>
-                {sync === 'syncing' ? tr('同步中…') : sync === 'offline' ? `暂时没同步上（${syncError || tr('网络不通')}），会自动重试 · 点此立即重试` : tr('已同步 · 点此刷新')}
+                {sync === 'syncing' ? tr('同步中…') : sync === 'offline' ? tr('暂时没同步上（{err}），会自动重试 · 点此立即重试', { err: syncError || tr('网络不通') }) : tr('已同步 · 点此刷新')}
               </Caption>
             </Pressable>
           )}
@@ -86,11 +87,9 @@ export default function Family() {
                 {me.role === 'mom' && !isMe && (
                   <>
                     <Divider />
-                    <Row style={{ justifyContent: 'space-between' }}>
-                      <Caption>{m.role === 'dad' ? tr('可见：动态、产检、数值、用药') : tr('可见：孕周、动态、产检日程')}</Caption>
-                      <Pressable onPress={() => alert(tr('移除成员'), `确定把 ${m.name} 移出家庭？`, [{ text: tr('取消') }, { text: tr('移除'), style: 'destructive', onPress: () => dispatch({ type: 'removeMember', id: m.id }) }])}>
-                        <Caption style={{ color: colors.warn }}>{tr('移除')}</Caption>
-                      </Pressable>
+                    <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <Caption style={{ flex: 1, minWidth: 160 }}>{m.role === 'dad' ? tr('可见：动态、产检、数值、用药') : tr('可见：孕周、动态、产检日程')}</Caption>
+                      <Button title={tr('移出家庭')} small kind="danger" onPress={() => alert(tr('移出家庭'), tr('确定把 {name} 移出家庭？TA 将看不到任何记录，之后可凭邀请码重新加入。', { name: m.name }), [{ text: tr('取消'), style: 'cancel' }, { text: tr('移出'), style: 'destructive', onPress: () => dispatch({ type: 'removeMember', id: m.id }) }])} />
                     </Row>
                   </>
                 )}
@@ -121,7 +120,16 @@ export default function Family() {
           <Feed />
         </Section>
 
-        <Card style={{ marginTop: space.xl }} onPress={() => router.push('/settings' as never)}>
+        <Card style={{ marginTop: space.xl }}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Body style={{ fontWeight: '700' }}>语言 · Language</Body>
+              <Caption>{tr('只影响这台手机')}</Caption>
+            </View>
+            <LangToggle compact />
+          </Row>
+        </Card>
+        <Card style={{ marginTop: space.md }} onPress={() => router.push('/settings' as never)}>
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Body style={{ fontWeight: '700' }}>{tr('外观与字号')}</Body>

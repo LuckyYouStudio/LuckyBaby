@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { extractCode } from '../src/lib/invite';
+import { LangToggle } from '../src/components/LangToggle';
 import { alert } from '../src/lib/alert';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -98,7 +99,10 @@ export default function Onboarding() {
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: space.xl, paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
-          <Caption style={{ marginBottom: 8 }}>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
+          <Row style={{ justifyContent: 'space-between', marginBottom: 8 }}>
+            <Caption>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
+            <LangToggle compact />
+          </Row>
           <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? tr('你好，准妈妈') : tr('加入她的孕期')}</H1>
 
           <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我是准妈妈'), d: tr('建立家庭') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />

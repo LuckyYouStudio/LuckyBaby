@@ -51,8 +51,8 @@ export default function Life() {
   const weights = logs.filter((l) => l.kind === 'weight' && l.value != null).sort((a, b) => (a.date < b.date ? -1 : 1)).map((l) => ({ date: l.date, value: l.value! }));
   const lastW = weights[weights.length - 1];
   const firstW = weights[0];
-  const kindLabel = { weight: '体重', symptom: '症状', mood: '心情', kick: '胎动', note: '随手记' } as const;
-  const kindTone = { weight: 'pine', symptom: 'warn', mood: 'apricot', kick: 'slate', note: 'grey' } as const;
+  const kindLabel = { weight: '体重', symptom: '症状', mood: '心情', kick: '胎动', note: '随手记', contraction: '宫缩' } as const;
+  const kindTone = { weight: 'pine', symptom: 'warn', mood: 'apricot', kick: 'slate', note: 'grey', contraction: 'apricot' } as const;
 
   return (
     <Screen>
@@ -68,6 +68,11 @@ export default function Life() {
               <Text style={{ fontSize: 26 }}>🧳</Text>
               <Body style={{ fontWeight: '700', marginTop: 4 }}>待产包</Body>
               <Caption>{packDone} / {packTotal} 已备好{'\n'}全家一起准备</Caption>
+            </Card>
+            <Card style={{ flex: 1, backgroundColor: colors.slateSoft, borderColor: colors.slateSoft }} onPress={() => router.push('/contractions' as never)}>
+              <Text style={{ fontSize: 26 }}>⏱️</Text>
+              <Body style={{ fontWeight: '700', marginTop: 4 }}>宫缩计时</Body>
+              <Caption>一按开始一按结束{'\n'}规律了会告诉你</Caption>
             </Card>
           </Row>
         )}
@@ -102,7 +107,7 @@ export default function Life() {
                       <Caption>{fmtDate(l.date)}</Caption>
                     </Row>
                   </Row>
-                  {l.kind !== 'note' && l.kind !== 'symptom' && l.kind !== 'mood' && !!l.text && <Body2 style={{ marginTop: 4 }}>{l.text}</Body2>}
+                  {(l.kind === 'weight' || l.kind === 'kick' || l.kind === 'contraction') && !!l.text && <Body2 style={{ marginTop: 4 }}>{l.text}</Body2>}
                 </Card>
               );
             })

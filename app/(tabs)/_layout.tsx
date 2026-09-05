@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { colors } from '../../src/theme';
+import { useStore } from '../../src/store/store';
 
 const ICONS: Record<string, string> = { index: '今', checkups: '检', meds: '药', life: '记', family: '家' };
 
@@ -12,6 +13,7 @@ function Icon({ name, focused }: { name: string; focused: boolean }) {
 }
 
 export default function TabLayout() {
+  useStore(); // 主题切换时重渲染
   return (
     <Tabs
       screenOptions={({ route }) => ({

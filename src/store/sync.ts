@@ -6,6 +6,7 @@ import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Role, Su
 export interface CloudInfo { familyId: string; userId: string }
 
 type Row = Record<string, unknown>;
+const isLocalPhoto = (p: string) => /^(file|ph|assets-library|content):/.test(p);
 
 // ---------- 行 ↔ 本地对象 ----------
 const toMember = (r: Row): Member => ({ id: r.id as string, name: r.name as string, role: r.role as Role, relation: (r.relation as string) ?? undefined, joinedAt: r.joined_at as string });
@@ -15,11 +16,12 @@ const toCheckup = (r: Row): Checkup => ({
   notes: (r.notes as string) ?? undefined, companionId: (r.companion_id as string) ?? undefined, done: !!r.done,
   metrics: (r.metrics as Checkup['metrics']) ?? [], result: (r.result as string) ?? undefined, visibility: r.visibility as Checkup['visibility'],
   bringItems: (r.bring_items as Checkup['bringItems']) ?? [],
+  photos: (r.photos as string[]) ?? [],
 });
 const fromCheckup = (c: Checkup, fid: string): Row => ({
   id: c.id, family_id: fid, title: c.title, week_from: c.weekFrom, week_to: c.weekTo, date: c.date ?? null, hospital: c.hospital ?? null,
   items: c.items, notes: c.notes ?? null, companion_id: c.companionId ?? null, done: c.done, metrics: c.metrics, result: c.result ?? null,
-  visibility: c.visibility, bring_items: c.bringItems ?? [], updated_at: new Date().toISOString(),
+  visibility: c.visibility, bring_items: c.bringItems ?? [], photos: (c.photos ?? []).filter((p) => !isLocalPhoto(p)), updated_at: new Date().toISOString(),
 });
 const toSupplement = (r: Row): Supplement => ({
   id: r.id as string, name: r.name as string, dose: (r.dose as string) ?? '', timeOfDay: (r.time_of_day as string) ?? '08:00',
@@ -40,7 +42,8 @@ const toPregnancy = (f: Row): Pregnancy => ({ dueDate: f.due_date as string, lmp
 
 // ---------- RPC ----------
 export async function createFamilyRemote(p: Pregnancy, memberId: string) {
-  const { data, error } = await supabase!.rpc('create_family', { p_due_date: p.dueDate, p_lmp: p.lmp ?? null, p_mom_name: p.momName, p_baby_nickname: p.babyNickname ?? null, p_member_id: memberId });
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai';
+  const { data, error } = await supabase!.rpc('create_family', { p_due_date: p.dueDate, p_lmp: p.lmp ?? null, p_mom_name: p.momName, p_baby_nickname: p.babyNickname ?? null, p_member_id: memberId, p_tz: tz });
   if (error) throw error;
   return data as { family_id: string; invite_code: string; member_id: string };
 }
@@ -105,8 +108,8 @@ async function diffTable<T extends { id: string }>(table: string, prev: T[], nex
 }
 
 export async function pushDiff(prev: AppState, next: AppState, fid: string) {
-  const noPhotos = (c: Checkup) => ({ ...c, photos: undefined });
-  await diffTable('checkups', prev.checkups.map(noPhotos), next.checkups.map(noPhotos), (c) => fromCheckup(c, fid));
+  const cloudPhotos = (c: Checkup) => ({ ...c, photos: (c.photos ?? []).filter((p) => !isLocalPhoto(p)) });
+  await diffTable('checkups', prev.checkups.map(cloudPhotos), next.checkups.map(cloudPhotos), (c) => fromCheckup(c, fid));
   await diffTable('supplements', prev.supplements, next.supplements, (s) => fromSupplement(s, fid));
   await diffTable('supplement_logs', prev.supplementLogs, next.supplementLogs, (l) => fromSupLog(l, fid));
   await diffTable('daily_logs', prev.logs, next.logs, (l) => fromLog(l, fid));

@@ -62,8 +62,8 @@ export default function Kicks() {
         >
           {({ pressed }) => (
             <>
-              <Text style={{ fontSize: 96, fontWeight: '700', color: pressed ? '#fff' : colors.pine, fontVariant: ['tabular-nums'], lineHeight: 104 }}>{count}</Text>
-              <Text style={{ fontSize: 18, color: pressed ? '#fff' : colors.pine, fontWeight: '600' }}>{startedAt ? '动了，按一下' : '按这里开始'}</Text>
+              <Text style={{ fontSize: 96, fontWeight: '700', color: pressed ? colors.onPine : colors.pine, fontVariant: ['tabular-nums'], lineHeight: 104 }}>{count}</Text>
+              <Text style={{ fontSize: 18, color: pressed ? colors.onPine : colors.pine, fontWeight: '600' }}>{startedAt ? '动了，按一下' : '按这里开始'}</Text>
             </>
           )}
         </Pressable>

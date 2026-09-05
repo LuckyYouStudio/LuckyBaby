@@ -37,7 +37,7 @@ export default function Packing() {
                 return (
                   <Pressable key={it.id} disabled={readonly} onPress={() => dispatch({ type: 'togglePacking', id: it.id, byId: me.id })} style={{ flexDirection: 'row', alignItems: 'center', padding: space.md, paddingHorizontal: space.lg, borderTopWidth: idx ? 1 : 0, borderTopColor: colors.line }}>
                     <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: it.done ? colors.pine : colors.line, backgroundColor: it.done ? colors.pine : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                      {it.done && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>✓</Text>}
+                      {it.done && <Text style={{ color: colors.onPine, fontSize: 14, fontWeight: '700' }}>✓</Text>}
                     </View>
                     <Body style={{ flex: 1, color: it.done ? colors.ink3 : colors.ink, textDecorationLine: it.done ? 'line-through' : 'none' }}>{it.text}</Body>
                     {who && <Avatar name={who.name} role={who.role} size={22} />}

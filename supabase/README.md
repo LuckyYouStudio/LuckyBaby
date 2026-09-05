@@ -9,6 +9,15 @@
 - 账号下另有一个注册时自动生成的默认项目（美国东部），未使用，可在 Dashboard 删除。
 - 后续改 schema：改完 `schema.sql` 后执行 `supabase db query --linked --file supabase/schema.sql`（注意脚本非幂等，建表语句重复执行会报错，可只执行改动片段）。
 
+## M2 已接入（2026-09-05）
+
+- **报告照片云同步**：私有桶 `reports`，路径 `<family_id>/<checkup_id>/<uuid>.jpg`，按家庭成员 RLS；App 端显示走 1 小时签名链接。
+- **伴侣提醒**：Edge Function `nudge-partner` + pg_cron 每 30 分钟；她到点 2 小时没记补充剂，就给准爸爸发 Expo 推送，`nudges` 表去重。
+  - 远程推送生效条件：App 有 EAS projectId（`app.json extra.eas.projectId`，需 Expo 账号 `eas init`）+ Apple 开发者账号（推送权限）。**目前两者都没有**，所以云端任务会跑但 `push_tokens` 为空，不会发。
+  - 过渡方案已生效：准爸爸手机上的本地提醒（她到点 2 小时未记，且他的 App 已同步到这一状态）。
+  - 改函数后重新部署：`supabase functions deploy nudge-partner --no-verify-jwt`；secret 用 `supabase secrets set CRON_SECRET=...`，并同步更新 cron.job 里的 header。
+- 家庭时区 `families.tz` 由建家庭的手机上报。
+
 ## 一次性准备（需要你的 Supabase 账号）
 
 1. 登录 CLI（会打开浏览器）：

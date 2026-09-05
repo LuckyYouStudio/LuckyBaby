@@ -5,7 +5,9 @@
 ## 文档
 - docs/01-市场调研.md：市场、竞品、用户痛点、来源
 - docs/02-产品方案.md：定位、角色权限、功能、商业模式、技术方案、里程碑
-- supabase/schema.sql：M1 云同步数据模型与 RLS（尚未接入）
+- docs/03-孕妇痛点与体验优化.md：孕妇痛点调研与对应改动
+- supabase/schema.sql：数据模型、RLS、RPC、Storage、推送表（已接入，见 supabase/README.md）
+- supabase/functions/nudge-partner：伴侣提醒 Edge Function（pg_cron 每 30 分钟）
 
 ## 技术栈
 Expo SDK 57 + React Native 0.86 + TypeScript + expo-router（文件路由）。本地优先：AsyncStorage 持久化 reducer（`src/store/store.tsx`）；云同步用 Supabase（`src/lib/supabase.ts`、`src/store/sync.ts`），差异推送 + Realtime 拉取合并。没有 `.env` 时以纯本地模式运行。接入状态见 supabase/README.md。
@@ -25,7 +27,9 @@ npx expo start          # 只起 Metro（原生 App 已装好时用这个；按 
 - `app/`：路由。`(tabs)/` 五个页签：今天 index、产检 checkups、用药 meds、记录 life、家庭 family；`checkup/[id]` 产检详情；`log/new` 记一笔；`member/new` 添加成员；`demo` 示例数据。
 - `src/data/`：类型、产检模板（中国常规节点）、补充剂模板、每周宝宝大小。
 - `src/store/`：全局 reducer + 持久化 + 派生数据（`useDerived` 含孕周与可见性判断）。
-- `src/components/ui.tsx`：通用组件；`src/theme.ts`：颜色与字号。
+- `src/components/ui.tsx`：通用组件；`src/theme.ts`：颜色与字号。`colors` 是可变对象，`applyTheme()` 在根布局按设置/系统切换深浅色，`fontScale` 控制字号；样式必须在渲染时读 `colors.x`，不要在模块顶层缓存。
+- `src/lib/reminders.ts` 本地提醒（产检/补充剂/准爸爸的“她还没记”）；`src/lib/photos.ts` 报告照片上传与签名链接；`src/lib/push.ts` 推送 token 登记。
+- 其他页面：`kicks` 数胎动、`contractions` 宫缩计时、`packing` 待产包、`settings` 外观与字号。
 
 ## 约定
 - 角色可见性：mom 全可见；dad 看 partner/family；family 只看 family（产检日程例外：家人可看标题/日期，不看数值和结果）。

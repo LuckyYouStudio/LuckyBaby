@@ -226,3 +226,66 @@ alter publication supabase_realtime add table members, checkups, supplements, su
 -- 体验优化：产检“带什么”清单（照片暂存本机，不同步）
 -- ---------------------------------------------------------------------------
 alter table checkups add column if not exists bring_items jsonb default '[]';
+-- ---------------------------------------------------------------------------
+-- M2：报告照片云存储、伴侣提醒（推送 token 与去重表）
+-- ---------------------------------------------------------------------------
+alter table checkups add column if not exists photos text[] default '{}';
+
+-- 私有桶 reports，路径 <family_id>/<checkup_id>/<uuid>.jpg
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values ('reports', 'reports', false, 10485760, array['image/jpeg', 'image/png', 'image/heic', 'image/webp'])
+  on conflict (id) do nothing;
+
+create policy "family reads reports" on storage.objects for select
+  using (bucket_id = 'reports' and my_role(((storage.foldername(name))[1])::uuid) is not null);
+create policy "parents write reports" on storage.objects for insert
+  with check (bucket_id = 'reports' and my_role(((storage.foldername(name))[1])::uuid) in ('mom', 'dad'));
+create policy "parents delete reports" on storage.objects for delete
+  using (bucket_id = 'reports' and my_role(((storage.foldername(name))[1])::uuid) in ('mom', 'dad'));
+
+-- 推送 token：每个成员一台设备（简化）
+create table if not exists push_tokens (
+  member_id uuid primary key references members(id) on delete cascade,
+  family_id uuid references families(id) on delete cascade,
+  token text not null,
+  platform text,
+  updated_at timestamptz default now()
+);
+alter table push_tokens enable row level security;
+create policy "member manages own token" on push_tokens for all
+  using (exists (select 1 from members m where m.id = member_id and m.user_id = auth.uid()))
+  with check (exists (select 1 from members m where m.id = member_id and m.user_id = auth.uid()));
+
+-- 伴侣提醒去重：同一补充剂同一天只提醒一次
+create table if not exists nudges (
+  id uuid primary key default gen_random_uuid(),
+  family_id uuid references families(id) on delete cascade,
+  supplement_id uuid references supplements(id) on delete cascade,
+  date date not null,
+  sent_at timestamptz default now(),
+  unique (supplement_id, date)
+);
+alter table nudges enable row level security;
+
+-- 伴侣提醒定时任务（每 30 分钟调用 Edge Function nudge-partner；secret 由 supabase secrets 管理）
+-- create extension if not exists pg_cron; create extension if not exists pg_net;
+-- select cron.schedule('nudge-partner', '*/30 * * * *', $$ select net.http_post(url := 'https://<ref>.supabase.co/functions/v1/nudge-partner', headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb, body := '{}'::jsonb); $$);
+-- 家庭时区：伴侣提醒按家庭所在时区算“到点 2 小时”
+alter table families add column if not exists tz text default 'Asia/Shanghai';
+create or replace function create_family(
+  p_due_date date, p_lmp date, p_mom_name text, p_baby_nickname text, p_member_id uuid default gen_random_uuid(), p_tz text default 'Asia/Shanghai'
+) returns json language plpgsql security definer set search_path = public as $$
+declare
+  fid uuid; code text;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  loop
+    code := gen_invite_code();
+    exit when not exists (select 1 from families where invite_code = code);
+  end loop;
+  insert into families (invite_code, due_date, lmp, mom_name, baby_nickname, created_by, tz)
+    values (code, p_due_date, p_lmp, p_mom_name, p_baby_nickname, auth.uid(), coalesce(p_tz, 'Asia/Shanghai')) returning id into fid;
+  insert into members (id, family_id, user_id, name, role) values (p_member_id, fid, auth.uid(), p_mom_name, 'mom');
+  return json_build_object('family_id', fid, 'invite_code', code, 'member_id', p_member_id);
+end $$;
+grant execute on function create_family(date, date, text, text, uuid, text) to authenticated;

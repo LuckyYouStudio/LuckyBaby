@@ -53,15 +53,32 @@ export async function rescheduleReminders(state: AppState) {
       }
     }
 
-    // 补充剂（只排本周需要吃的）
+    const me = state.members.find((m) => m.id === state.meId);
     const week = state.pregnancy.dueDate ? gestation(state.pregnancy.dueDate).week : 0;
-    for (const s of state.supplements) {
-      if (!s.active || week < s.weekFrom || week > s.weekTo) continue;
-      const [hh, mm] = (s.timeOfDay || '08:00').split(':').map(Number);
-      await Notifications.scheduleNotificationAsync({
-        content: { title: `该吃${s.name}了`, body: `${s.dose}${s.note ? ' · ' + s.note : ''}`, data: { supplementId: s.id } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh || 8, minute: mm || 0 },
-      });
+    const due = state.supplements.filter((s) => s.active && week >= s.weekFrom && week <= s.weekTo);
+
+    if (me?.role === 'dad') {
+      // 准爸爸：她到点 2 小时还没记，就提醒他看一眼（本机版；有远程推送后由云端统一发）
+      for (const s of due) {
+        const logged = state.supplementLogs.some((l) => l.supplementId === s.id && l.date === t);
+        if (logged) continue;
+        const [hh, mm] = (s.timeOfDay || '08:00').split(':').map(Number);
+        const at = new Date(); at.setHours((hh || 8) + 2, mm || 0, 0, 0);
+        if (at <= now) continue;
+        await Notifications.scheduleNotificationAsync({
+          content: { title: `${state.pregnancy.momName}今天的${s.name}还没记`, body: '问问她吃了没，或者你替她记一下', data: { supplementId: s.id, nudge: true } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+        });
+      }
+    } else {
+      // 准妈妈：到点提醒吃
+      for (const s of due) {
+        const [hh, mm] = (s.timeOfDay || '08:00').split(':').map(Number);
+        await Notifications.scheduleNotificationAsync({
+          content: { title: `该吃${s.name}了`, body: `${s.dose}${s.note ? ' · ' + s.note : ''}`, data: { supplementId: s.id } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh || 8, minute: mm || 0 },
+        });
+      }
     }
     const pending = await Notifications.getAllScheduledNotificationsAsync();
     console.log(`[reminders] scheduled ${pending.length}:`, pending.map((n) => n.content.title).join(' | '));

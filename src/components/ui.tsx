@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, ViewStyle, TextStyle } from 'react-native';
-import { colors, radius, roleColor, space, type } from '../theme';
+import { Pressable, Text, TextInput, View, ViewStyle, TextStyle } from 'react-native';
+import { colors, fontScale, radius, roleColor, space, type } from '../theme';
 import type { Role } from '../data/types';
 
 export function Screen({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
@@ -50,7 +50,7 @@ export function Section({ title, right, children }: { title: string; right?: Rea
 
 export function Button({ title, onPress, kind = 'primary', small, disabled, style }: { title: string; onPress: () => void; kind?: 'primary' | 'ghost' | 'danger'; small?: boolean; disabled?: boolean; style?: ViewStyle }) {
   const bg = kind === 'primary' ? colors.pine : kind === 'danger' ? colors.warnSoft : 'transparent';
-  const fg = kind === 'primary' ? '#fff' : kind === 'danger' ? colors.warn : colors.pine;
+  const fg = kind === 'primary' ? colors.onPine : kind === 'danger' ? colors.warn : colors.pine;
   return (
     <Pressable
       onPress={onPress}
@@ -62,7 +62,7 @@ export function Button({ title, onPress, kind = 'primary', small, disabled, styl
         style,
       ]}
     >
-      <Text style={{ color: fg, fontWeight: '700', fontSize: small ? 14 : 16 }}>{title}</Text>
+      <Text style={{ color: fg, fontWeight: '700', fontSize: Math.round((small ? 14 : 16) * fontScale) }}>{title}</Text>
     </Pressable>
   );
 }
@@ -78,7 +78,7 @@ export function Pill({ text, tone = 'pine' }: { text: string; tone?: 'pine' | 'a
   const [bg, fg] = map[tone];
   return (
     <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.sm, alignSelf: 'flex-start' }}>
-      <Text style={{ color: fg, fontSize: 12, fontWeight: '600' }}>{text}</Text>
+      <Text style={{ color: fg, fontSize: Math.round(12 * fontScale), fontWeight: '600' }}>{text}</Text>
     </View>
   );
 }
@@ -125,10 +125,10 @@ export function Empty({ text }: { text: string }) {
   );
 }
 
-const s = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.md, padding: space.lg, borderWidth: 1, borderColor: colors.line },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.sm },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.ink3, letterSpacing: 1 },
-  btn: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: radius.md, alignItems: 'center', borderWidth: 1 },
-  input: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, color: colors.ink },
-});
+const s = {
+  get card() { return { backgroundColor: colors.card, borderRadius: radius.md, padding: space.lg, borderWidth: 1, borderColor: colors.line }; },
+  get sectionHead() { return { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'baseline' as const, marginBottom: space.sm }; },
+  get sectionTitle() { return { fontSize: Math.round(13 * fontScale), fontWeight: '700' as const, color: colors.ink3, letterSpacing: 1 }; },
+  get btn() { return { paddingVertical: 12, paddingHorizontal: 18, borderRadius: radius.md, alignItems: 'center' as const, borderWidth: 1 }; },
+  get input() { return { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: Math.round(16 * fontScale), color: colors.ink }; },
+};

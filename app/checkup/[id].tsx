@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { alert } from '../../src/lib/alert';
-import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { ReportPhoto } from '../../src/components/ReportPhoto';
+import { deleteReportPhoto, uploadReportPhoto } from '../../src/lib/photos';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Field, Pill, Row, Screen, Section } from '../../src/components/ui';
@@ -21,6 +23,7 @@ export default function CheckupDetail() {
   const [bring, setBring] = useState(original?.bringItems?.length ? original.bringItems : defaultBring(original?.notes));
   const [newBring, setNewBring] = useState('');
   const [viewer, setViewer] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   useEffect(() => {
     // 直接通过链接打开时，本地数据可能晚于页面初始化才恢复
     if (!c && original) {
@@ -48,15 +51,26 @@ export default function CheckupDetail() {
       ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
       : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsMultipleSelection: true, selectionLimit: 6 });
     if (res.canceled) return;
-    const uris = res.assets.map((a) => a.uri);
-    const next = { ...c, photos: [...(c.photos ?? []), ...uris] };
+    setUploading(true);
+    const paths: string[] = [];
+    let failed = 0;
+    for (const a of res.assets) {
+      if (state.cloud) {
+        try { paths.push(await uploadReportPhoto(state.cloud.familyId, c.id, a.uri)); }
+        catch { failed++; paths.push(a.uri); } // 传不上去先留本机，之后再试
+      } else paths.push(a.uri);
+    }
+    setUploading(false);
+    const next = { ...c, photos: [...(c.photos ?? []), ...paths] };
     setC(next);
     dispatch({ type: 'upsertCheckup', checkup: next }); // 照片立刻保存，不用等点保存
+    if (failed) alert('有照片没传到云端', '已先存在这台手机上，家人暂时看不到。网络好了再加一次即可。');
   };
   const removePhoto = (uri: string) => {
     const next = { ...c, photos: (c.photos ?? []).filter((p) => p !== uri) };
     setC(next);
     dispatch({ type: 'upsertCheckup', checkup: next });
+    deleteReportPhoto(uri).catch(() => {});
   };
 
   const vis: { v: Visibility; t: string }[] = [
@@ -110,7 +124,7 @@ export default function CheckupDetail() {
                 {bring.map((b, i) => (
                   <Pressable key={i} disabled={readonly} onPress={() => setBring(bring.map((x, j) => (j === i ? { ...x, done: !x.done } : x)))} style={{ flexDirection: 'row', alignItems: 'center', padding: space.md, paddingHorizontal: space.lg, borderTopWidth: i ? 1 : 0, borderTopColor: colors.line }}>
                     <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: b.done ? colors.pine : colors.line, backgroundColor: b.done ? colors.pine : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                      {b.done && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>✓</Text>}
+                      {b.done && <Text style={{ color: colors.onPine, fontSize: 13, fontWeight: '700' }}>✓</Text>}
                     </View>
                     <Body style={{ flex: 1, color: b.done ? colors.ink3 : colors.ink }}>{b.text}</Body>
                     {!readonly && <Pressable onPress={() => setBring(bring.filter((_, j) => j !== i))} hitSlop={8}><Caption>移除</Caption></Pressable>}
@@ -133,12 +147,13 @@ export default function CheckupDetail() {
               <Row style={{ flexWrap: 'wrap', gap: 8 }}>
                 {(c.photos ?? []).map((uri) => (
                   <Pressable key={uri} onPress={() => setViewer(uri)} onLongPress={() => !readonly && alert('删除这张照片？', undefined, [{ text: '取消', style: 'cancel' }, { text: '删除', style: 'destructive', onPress: () => removePhoto(uri) }])}>
-                    <Image source={{ uri }} style={{ width: 96, height: 96, borderRadius: 8, backgroundColor: colors.paper2 }} />
+                    <ReportPhoto path={uri} style={{ width: 96, height: 96, borderRadius: 8 }} />
                   </Pressable>
                 ))}
               </Row>
             )}
-            {(c.photos ?? []).length > 0 && <Caption style={{ marginTop: 6 }}>照片只存在本机；长按可删除。</Caption>}
+            {uploading && <Row style={{ marginTop: 8 }}><ActivityIndicator color={colors.pine} /><Caption>正在传到云端…</Caption></Row>}
+            {(c.photos ?? []).length > 0 && <Caption style={{ marginTop: 6 }}>{state.cloud ? '家人也能看到；长按可删除。' : '照片只存在本机；长按可删除。'}</Caption>}
           </Section>
 
           <Section title="谁陪同">
@@ -217,8 +232,8 @@ export default function CheckupDetail() {
       </KeyboardAvoidingView>
       <Modal visible={!!viewer} transparent animationType="fade" onRequestClose={() => setViewer(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setViewer(null)}>
-          {viewer && <Image source={{ uri: viewer }} style={{ width: '100%', height: '85%' }} resizeMode="contain" />}
-          <Caption style={{ color: '#fff', marginTop: 8 }}>点任意处关闭</Caption>
+          {viewer && <ReportPhoto path={viewer} style={{ width: '100%', height: '85%' }} resizeMode="contain" />}
+          <Caption style={{ color: colors.onPine, marginTop: 8 }}>点任意处关闭</Caption>
         </Pressable>
       </Modal>
     </Screen>

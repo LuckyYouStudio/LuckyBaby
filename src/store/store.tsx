@@ -8,6 +8,7 @@ import { demoState } from './demo';
 import { cloudEnabled, ensureSession } from '../lib/supabase';
 import { myFamilyRemote, pullAll, pushDiff, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 import { cancelReminders, rescheduleReminders } from '../lib/reminders';
+import { registerPushToken } from '../lib/push';
 
 const KEY = 'luckybaby.state.v1';
 const SYNCED_KEY = 'luckybaby.synced.v1'; // 上次与云端一致的快照
@@ -48,6 +49,7 @@ type Action =
   | { type: 'comment'; activityId: string; byId: string; text: string }
   | { type: 'post'; byId: string; text: string }
   | { type: 'setReminders'; enabled: boolean }
+  | { type: 'setSettings'; settings: Partial<NonNullable<AppState['settings']>> }
   | { type: 'togglePacking'; id: string; byId: string }
   | { type: 'addPacking'; group: string; text: string };
 
@@ -93,8 +95,12 @@ function reducer(s: AppState, a: Action): AppState {
       return {
         ...s,
         members: mergeSlice(a.slices.members, s.members, L.members),
-        // 报告照片只存本机：合并后把本地照片贴回去
-        checkups: mergeSlice(a.slices.checkups, s.checkups, L.checkups).map((c) => ({ ...c, photos: s.checkups.find((x) => x.id === c.id)?.photos ?? c.photos })),
+        // 云端照片以服务端为准；本机还没传上去的 file:// 照片保留
+        checkups: mergeSlice(a.slices.checkups, s.checkups, L.checkups).map((c) => {
+          const local = (s.checkups.find((x) => x.id === c.id)?.photos ?? []).filter((p) => /^(file|ph|assets-library|content):/.test(p));
+          const cloud = (c.photos ?? []).filter((p) => !local.includes(p));
+          return { ...c, photos: [...cloud, ...local] };
+        }),
         supplements: mergeSlice(a.slices.supplements, s.supplements, L.supplements),
         supplementLogs: mergeSlice(a.slices.supplementLogs, s.supplementLogs, L.supplementLogs),
         logs: mergeSlice(a.slices.logs, s.logs, L.logs),
@@ -143,6 +149,8 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, activities: [act(a.byId, 'log', a.text, 'family'), ...s.activities] };
     case 'setReminders':
       return { ...s, remindersEnabled: a.enabled };
+    case 'setSettings':
+      return { ...s, settings: { theme: 'system', fontScale: 1, ...s.settings, ...a.settings } };
     case 'togglePacking': {
       const packing = (s.packing && s.packing.length ? s.packing : defaultPacking());
       return { ...s, packing: packing.map((p) => (p.id !== a.id ? p : { ...p, done: !p.done, byId: p.done ? undefined : a.byId })) };
@@ -226,13 +234,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   // 3b. 提醒：状态变化后重排（防抖）
-  const reminderKey = JSON.stringify({ e: state.remindersEnabled, c: state.checkups.map((c) => [c.id, c.date, c.done, c.hospital, c.bringItems]), s: state.supplements.map((x) => [x.id, x.active, x.timeOfDay, x.weekFrom, x.weekTo]), d: state.pregnancy.dueDate });
+  const reminderKey = JSON.stringify({ e: state.remindersEnabled, me: state.meId, c: state.checkups.map((c) => [c.id, c.date, c.done, c.hospital, c.bringItems]), s: state.supplements.map((x) => [x.id, x.active, x.timeOfDay, x.weekFrom, x.weekTo]), l: state.supplementLogs.filter((l) => l.date === today()).map((l) => l.supplementId), d: state.pregnancy.dueDate });
   useEffect(() => {
     if (!hydrated.current) return;
     if (!state.remindersEnabled) { cancelReminders(); return; }
     const t = setTimeout(() => rescheduleReminders(stateRef.current), 800);
     return () => clearTimeout(t);
   }, [reminderKey]);
+
+  // 3c. 远程推送 token（有 EAS projectId 时才会真正登记）
+  useEffect(() => {
+    if (!state.cloud || !state.remindersEnabled || !state.meId) return;
+    registerPushToken(state.meId, state.cloud.familyId);
+  }, [state.cloud?.familyId, state.remindersEnabled, state.meId]);
 
   // 4. 拉取远端改动（实时 + 首次）
   const pull = async () => {

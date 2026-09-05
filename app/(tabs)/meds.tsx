@@ -57,7 +57,7 @@ export default function Meds() {
                         onPress={() => dispatch({ type: 'toggleSupplementLog', supplementId: s.id, date: d, byId: me.id })}
                         style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: l ? (who?.role === 'dad' ? colors.apricot : colors.pine) : colors.paper2, borderWidth: d === today ? 2 : 0, borderColor: colors.pine }}
                       >
-                        {l && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>✓</Text>}
+                        {l && <Text style={{ color: colors.onPine, fontSize: 12, fontWeight: '700' }}>✓</Text>}
                       </Pressable>
                     );
                   })}

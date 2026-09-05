@@ -114,6 +114,15 @@ export default function Family() {
           <Feed />
         </Section>
 
+        <Card style={{ marginTop: space.xl }} onPress={() => router.push('/settings' as never)}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <View>
+              <Body style={{ fontWeight: '700' }}>外观与字号</Body>
+              <Caption>深色模式给夜里起夜用；字号可以调大给长辈</Caption>
+            </View>
+            <Caption style={{ color: colors.pine }}>设置</Caption>
+          </Row>
+        </Card>
         {me.role === 'mom' && (
           <Pressable style={{ marginTop: space.xxl, alignItems: 'center' }} onPress={() => alert('清空数据', '删除本机全部记录并重新开始？', [{ text: '取消' }, { text: '清空', style: 'destructive', onPress: () => dispatch({ type: 'reset' }) }])}>
             <Caption style={{ color: colors.warn }}>清空本机数据</Caption>

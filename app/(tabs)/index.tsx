@@ -120,7 +120,7 @@ export default function Today() {
                     style={{ flexDirection: 'row', alignItems: 'center', padding: space.md, paddingHorizontal: space.lg, borderTopWidth: i ? 1 : 0, borderTopColor: colors.line }}
                   >
                     <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: log ? colors.pine : colors.line, backgroundColor: log ? colors.pine : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                      {log && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>✓</Text>}
+                      {log && <Text style={{ color: colors.onPine, fontSize: 13, fontWeight: '700' }}>✓</Text>}
                     </View>
                     <View style={{ flex: 1 }}>
                       <Body style={log ? { color: colors.ink3, textDecorationLine: 'line-through' } : undefined}>

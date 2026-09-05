@@ -69,7 +69,7 @@ export interface SupplementLog {
   at: string; // ISO
 }
 
-export type LogKind = 'weight' | 'symptom' | 'mood' | 'kick' | 'note';
+export type LogKind = 'weight' | 'symptom' | 'mood' | 'kick' | 'note' | 'contraction';
 
 export interface DailyLog {
   id: string;
@@ -111,4 +111,6 @@ export interface AppState {
   remindersEnabled?: boolean;
   /** 待产包（本版本本机保存） */
   packing?: PackingItem[];
+  /** 外观与字号（本机） */
+  settings?: { theme: 'system' | 'light' | 'dark'; fontScale: number };
 }

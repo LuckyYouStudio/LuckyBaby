@@ -22,8 +22,8 @@ export function Body({ children, style, numberOfLines }: { children: React.React
 export function Body2({ children, style, numberOfLines }: { children: React.ReactNode; style?: TextStyle; numberOfLines?: number }) {
   return <Text style={[type.body2, style]} numberOfLines={numberOfLines}>{children}</Text>;
 }
-export function Caption({ children, style }: { children: React.ReactNode; style?: TextStyle }) {
-  return <Text style={[type.caption, style]}>{children}</Text>;
+export function Caption({ children, style, numberOfLines }: { children: React.ReactNode; style?: TextStyle; numberOfLines?: number }) {
+  return <Text style={[type.caption, style]} numberOfLines={numberOfLines}>{children}</Text>;
 }
 
 export function Card({ children, style, onPress }: { children: React.ReactNode; style?: ViewStyle; onPress?: () => void }) {

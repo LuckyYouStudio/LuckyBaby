@@ -17,7 +17,7 @@ Expo SDK 57 + React Native 0.86 + TypeScript + expo-router（文件路由）。�
 npm install
 npm run ios             # 编译原生 iOS App 装到模拟器（需 Xcode + CocoaPods；首次约 10 分钟）
 npx expo start          # 只起 Metro（原生 App 已装好时用这个；按 w 可开浏览器调试）
-npm run ios:device      # 装到数据线连着的 iPhone（Release 包，独立运行；个人 Apple ID 签名 7 天有效）
+npm run ios:device      # 装到数据线连着的 iPhone（Release 包，独立运行；付费团队签名）
 ```
 - 真机安装：Xcode 需登录 Apple ID（app.json `ios.appleTeamId` 是该账号的个人团队）；脚本会自动去掉 aps-environment（个人团队没有推送权限）并用 `-allowProvisioningUpdates` 生成描述文件。
 - `ios/`、`android/` 由 `npx expo prebuild` 生成，已 gitignore；改了 app.json 或图标要重新 prebuild。

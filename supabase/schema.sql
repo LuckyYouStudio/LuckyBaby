@@ -69,7 +69,7 @@ create table supplement_logs (
 create table daily_logs (
   id uuid primary key default gen_random_uuid(),
   family_id uuid references families(id) on delete cascade,
-  kind text not null check (kind in ('weight','symptom','mood','kick','note')),
+  kind text not null check (kind in ('weight','symptom','mood','kick','note','contraction')),
   date date not null,
   value numeric,
   text text,
@@ -299,3 +299,6 @@ create table if not exists client_errors (
 );
 alter table client_errors enable row level security;
 create policy "member reports errors" on client_errors for insert with check (my_role(family_id) is not null);
+-- 记录类型白名单补上 contraction（宫缩计时）
+alter table daily_logs drop constraint if exists daily_logs_kind_check;
+alter table daily_logs add constraint daily_logs_kind_check check (kind in ('weight','symptom','mood','kick','note','contraction'));

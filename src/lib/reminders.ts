@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { AppState } from '../data/types';
 import { gestation, parseYmd, today } from './pregnancy';
+import { needsFasting } from '../data/schedule';
 
 const supported = Platform.OS !== 'web';
 
@@ -36,7 +37,7 @@ export async function rescheduleReminders(state: AppState) {
       if (c.done || !c.date || c.date < t) continue;
       const d = parseYmd(c.date);
       const bring = (c.bringItems ?? []).filter((b) => !b.done).map((b) => b.text).join('、');
-      const fasting = c.notes?.includes('空腹') ? '记得空腹。' : '';
+      const fasting = needsFasting(c.notes) ? '记得空腹。' : '';
       const eve = new Date(d); eve.setDate(eve.getDate() - 1); eve.setHours(20, 0, 0, 0);
       const morn = new Date(d); morn.setHours(8, 0, 0, 0);
       if (eve > now) {

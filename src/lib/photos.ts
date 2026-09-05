@@ -1,5 +1,6 @@
 // 报告照片：有云端时传到 Supabase Storage 私有桶 reports，本地只保留路径；纯本地模式保留 file:// URI。
 import { File } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { supabase } from './supabase';
 import { uid } from './pregnancy';
 
@@ -8,10 +9,14 @@ const isLocal = (p: string) => p.startsWith('file:') || p.startsWith('ph:') || p
 
 export async function uploadReportPhoto(familyId: string, checkupId: string, localUri: string): Promise<string> {
   if (!supabase) return localUri;
-  const bytes = await new File(localUri).bytes();
-  const ext = localUri.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
-  const path = `${familyId}/${checkupId}/${uid()}.${ext}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, { contentType: ext === 'png' ? 'image/png' : 'image/jpeg', upsert: false });
+  // 报告单看清字就行：长边压到 1600px、JPEG 0.75，通常 200–400KB
+  const ctx = ImageManipulator.manipulate(localUri);
+  ctx.resize({ width: 1600 });
+  const img = await ctx.renderAsync();
+  const saved = await img.saveAsync({ format: SaveFormat.JPEG, compress: 0.75 });
+  const bytes = await new File(saved.uri).bytes();
+  const path = `${familyId}/${checkupId}/${uid()}.jpg`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
   if (error) throw error;
   return path;
 }

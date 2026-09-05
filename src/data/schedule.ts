@@ -34,10 +34,13 @@ export const METRIC_DEFS: { key: string; label: string; unit: string; ref: strin
 
 /** 每次产检默认要带的东西 */
 export const DEFAULT_BRING = ['病历本（大白本）', '母子健康手册 / 电子条码', '医保卡 / 就诊码'];
+/** “不需空腹”不算需要空腹 */
+export const needsFasting = (notes?: string) => !!notes && /空腹/.test(notes) && !/(不需|不用|无需|不必)空腹/.test(notes);
+export const needsFullBladder = (notes?: string) => !!notes && /憋尿/.test(notes) && !/(不需|不用|无需|不必)憋尿/.test(notes);
 export function defaultBring(notes?: string) {
   const items = [...DEFAULT_BRING];
-  if (notes && notes.includes('空腹')) items.push('早餐（抽完血就吃）');
-  if (notes && notes.includes('憋尿')) items.push('一瓶水（到了再喝）');
+  if (needsFasting(notes)) items.push('早餐（抽完血就吃）');
+  if (needsFullBladder(notes)) items.push('一瓶水（到了再喝）');
   return items.map((text) => ({ text, done: false }));
 }
 

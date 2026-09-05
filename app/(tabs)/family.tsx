@@ -116,7 +116,7 @@ export default function Family() {
 
         <Card style={{ marginTop: space.xl }} onPress={() => router.push('/settings' as never)}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <View>
+            <View style={{ flex: 1, marginRight: 8 }}>
               <Body style={{ fontWeight: '700' }}>外观与字号</Body>
               <Caption>深色模式给夜里起夜用；字号可以调大给长辈</Caption>
             </View>

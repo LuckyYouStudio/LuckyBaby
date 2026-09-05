@@ -236,14 +236,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const msg = describe(e);
       setSync('offline'); setSyncError('上传失败：' + msg);
       failures.current += 1;
-      if (msg !== '网络不通') {
-        reportClientError(st.cloud.familyId, st.meId, `push: ${msg}`);
-        // 连续 3 次同样失败：以云端为准重新对齐，避免一直卡住
-        if (failures.current >= 3) { failures.current = 0; lastSynced.current = st; AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(st)).catch(() => {}); pull(); }
-      }
+      // 不丢弃本地改动：把原因上报并显示出来，之后按 60 秒节奏继续重试
+      if (msg !== '网络不通' && failures.current <= 3) reportClientError(st.cloud.familyId, st.meId, `push: ${msg}`);
     } finally {
       pushing.current = false;
-      if (stateRef.current !== lastSynced.current && stateRef.current.cloud) setTimeout(push, 3000);
+      if (stateRef.current !== lastSynced.current && stateRef.current.cloud) setTimeout(push, failures.current ? 60_000 : 3000);
     }
   };
   useEffect(() => {

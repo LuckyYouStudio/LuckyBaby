@@ -12,7 +12,8 @@ import { requestReminderPermission } from '../../src/lib/reminders';
 import { alert } from '../../src/lib/alert';
 import { Platform } from 'react-native';
 
-const QUICK = [
+// 在渲染时取色，深浅色切换才会跟着变
+const quickOptions = () => [
   { t: '还好', e: '🙂', fg: colors.pine, bg: colors.pineSoft },
   { t: '吐了', e: '🤢', fg: colors.warn, bg: colors.warnSoft },
   { t: '累瘫', e: '😪', fg: colors.slate, bg: colors.slateSoft },
@@ -72,7 +73,7 @@ export default function Today() {
           <View style={{ marginBottom: space.lg }}>
             <Caption style={{ marginBottom: 6 }}>今天怎么样？点一下就行</Caption>
             <Row style={{ gap: 8 }}>
-              {QUICK.map((q) => {
+              {quickOptions().map((q) => {
                 const on = todayMood?.text === q.t;
                 return (
                   <Pressable key={q.t} onPress={() => quick(q.t)} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, borderColor: on ? q.fg : colors.line, backgroundColor: on ? q.bg : colors.card }}>

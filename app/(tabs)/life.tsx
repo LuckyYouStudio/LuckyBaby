@@ -78,8 +78,8 @@ export default function Life() {
         )}
         <Section title="体重">
           <Card>
-            <Row style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-              <View>
+            <Row style={{ justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              <View style={{ flexShrink: 1 }}>
                 <Text style={{ fontSize: 28, fontWeight: '700', color: colors.ink, fontVariant: ['tabular-nums'] }}>{lastW ? `${lastW.value} kg` : '—'}</Text>
                 <Caption>{lastW ? `${fmtDate(lastW.date)}` : '还没记录'}{firstW && lastW && firstW !== lastW ? ` · 较首次 ${(lastW.value - firstW.value >= 0 ? '+' : '')}${(lastW.value - firstW.value).toFixed(1)} kg` : ''}</Caption>
               </View>

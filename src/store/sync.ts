@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Role, Supplement, SupplementLog } from '../data/types';
 import { tr } from '../i18n';
 
-export interface CloudInfo { familyId: string; userId: string }
+export interface CloudInfo { familyId: string; userId: string; bound?: boolean }
 
 type Row = Record<string, unknown>;
 const isLocalPhoto = (p: string) => /^(file|ph|assets-library|content):/.test(p);

@@ -9,7 +9,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.luckyyoustudio.luckybaby",
-      "appleTeamId": "JU4P42JZ54"
+      "appleTeamId": "JU4P42JZ54",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -44,7 +45,8 @@
           "cameraPermission": "用来扫描家人分享的邀请二维码。"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-apple-authentication"
     ],
     "scheme": "luckybaby",
     "experiments": {

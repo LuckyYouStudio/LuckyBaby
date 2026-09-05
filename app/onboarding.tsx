@@ -11,7 +11,8 @@ import { Body, Body2, Button, Caption, Field, H1, Row, Screen } from '../src/com
 import { colors, roleColor, space } from '../src/theme';
 import { addDays, dueFromLmp, today, uid } from '../src/lib/pregnancy';
 import { cloudEnabled, ensureSession } from '../src/lib/supabase';
-import { createFamilyRemote, joinFamilyRemote, pullAll } from '../src/store/sync';
+import { createFamilyRemote, joinFamilyRemote, myFamilyRemote, pullAll } from '../src/store/sync';
+import { signInWithApple } from '../src/lib/account';
 import type { Role } from '../src/data/types';
 import { tr } from '../src/i18n';
 
@@ -80,6 +81,23 @@ export default function Onboarding() {
     } finally { setBusy(false); }
   };
 
+  const restore = async () => {
+    if (!cloudEnabled) return;
+    setBusy(true);
+    try {
+      const userId = await signInWithApple();
+      const mine = await myFamilyRemote();
+      if (!mine) { alert(tr('这个 Apple ID 还没有绑定过家庭'), tr('如果你是准妈妈，请建立家庭；如果是家人，请用邀请码加入。')); return; }
+      const slices = await pullAll(mine.familyId);
+      const me = slices.members.find((m) => m.id === mine.memberId);
+      if (!me) throw new Error('member missing');
+      dispatch({ type: 'joinFamily', pregnancy: mine.pregnancy, me, familyCode: mine.inviteCode, cloud: { familyId: mine.familyId, userId, bound: true }, slices });
+    } catch (e: any) {
+      if (String(e?.code) === 'ERR_REQUEST_CANCELED') return;
+      alert(tr('恢复失败'), String(e?.message ?? e));
+    } finally { setBusy(false); }
+  };
+
   const join = async () => {
     if (!validJoin) return;
     if (!cloudEnabled) { alert(tr('云同步未配置'), tr('请先在 .env 里填 Supabase 地址和密钥。')); return; }
@@ -145,6 +163,11 @@ export default function Onboarding() {
           )}
 
           <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{cloudEnabled ? tr('数据只在你的家庭内可见。不做社区，不做广告，不卖数据。') : tr('数据只存在你的手机里。不做社区，不做广告，不卖数据。')}</Caption>
+          {cloudEnabled && Platform.OS === 'ios' && (
+            <Pressable onPress={restore} style={{ marginTop: space.lg, alignItems: 'center' }} disabled={busy}>
+              <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('换了手机？用 Apple 登录恢复')}</Caption>
+            </Pressable>
+          )}
           <Pressable onPress={() => dispatch({ type: 'seedDemo' })} style={{ marginTop: space.xl, alignItems: 'center' }}>
             <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('先用示例家庭看看')}</Caption>
           </Pressable>

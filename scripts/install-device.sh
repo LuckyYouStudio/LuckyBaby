@@ -8,8 +8,11 @@ cd "$(dirname "$0")/.."
 DEVICE="${1:-$(xcrun xctrace list devices 2>/dev/null | awk '/== Simulators ==/{exit} /\(000/{match($0,/\(0000[0-9A-F-]+\)/); print substr($0,RSTART+1,RLENGTH-2); exit}')}"
 [ -z "$DEVICE" ] && { echo "没有找到连接的 iPhone，请用数据线连上并解锁"; exit 1; }
 npx expo prebuild --platform ios >/dev/null
-# 个人团队没有推送权限：去掉 aps-environment（本地提醒不受影响）
-/usr/libexec/PlistBuddy -c "Delete :aps-environment" ios/app/app.entitlements 2>/dev/null || true
+# 个人团队没有推送和 Apple 登录权限：去掉这两项（付费团队用 KEEP_ENTITLEMENTS=1 保留）
+if [ -z "$KEEP_ENTITLEMENTS" ]; then
+  /usr/libexec/PlistBuddy -c "Delete :aps-environment" ios/app/app.entitlements 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Delete :com.apple.developer.applesignin" ios/app/app.entitlements 2>/dev/null || true
+fi
 BUNDLE_ID=com.luckyyoustudio.luckybaby
 # 直接用 xcodebuild：允许自动生成描述文件（expo run:ios 不会传这个参数）
 xcodebuild -workspace ios/app.xcworkspace -scheme app -configuration Release \

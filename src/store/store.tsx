@@ -6,7 +6,7 @@ import { CHECKUP_TEMPLATES, defaultBring, defaultPacking } from '../data/schedul
 import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { dateOfWeek, gestation, today, uid } from '../lib/pregnancy';
 import { demoState } from './demo';
-import { cloudEnabled, ensureSession } from '../lib/supabase';
+import { cloudEnabled, ensureSession, supabase } from '../lib/supabase';
 import { myFamilyRemote, pullAll, pushDiff, reportClientError, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 import { cancelReminders, rescheduleReminders } from '../lib/reminders';
 import { registerPushToken } from '../lib/push';
@@ -52,6 +52,7 @@ type Action =
   | { type: 'comment'; activityId: string; byId: string; text: string }
   | { type: 'post'; byId: string; text: string }
   | { type: 'setReminders'; enabled: boolean }
+  | { type: 'setCloudUser'; userId: string; bound: boolean }
   | { type: 'setSettings'; settings: Partial<NonNullable<AppState['settings']>> }
   | { type: 'togglePacking'; id: string; byId: string }
   | { type: 'addPacking'; group: string; text: string };
@@ -160,6 +161,8 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, activities: [act(a.byId, 'log', a.text, 'family'), ...s.activities] };
     case 'setReminders':
       return { ...s, remindersEnabled: a.enabled };
+    case 'setCloudUser':
+      return s.cloud ? { ...s, cloud: { ...s.cloud, userId: a.userId, bound: a.bound } } : s;
     case 'setSettings':
       return { ...s, settings: { theme: 'system', fontScale: 1, ...s.settings, ...a.settings } };
     case 'togglePacking': {
@@ -212,6 +215,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       hydrated.current = true;
       setReady(true);
+      // 绑定状态以当前登录会话为准
+      if (supabase) {
+        const { data } = await supabase.auth.getUser();
+        const st = stateRef.current;
+        if (data.user && st.cloud) dispatch({ type: 'setCloudUser', userId: data.user.id, bound: !data.user.is_anonymous });
+      }
     })();
   }, []);
 

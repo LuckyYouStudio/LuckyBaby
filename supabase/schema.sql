@@ -313,3 +313,59 @@ alter table daily_logs drop constraint if exists daily_logs_by_id_fkey;
 alter table daily_logs add constraint daily_logs_by_id_fkey foreign key (by_id) references members(id) on delete set null;
 alter table checkups drop constraint if exists checkups_companion_id_fkey;
 alter table checkups add constraint checkups_companion_id_fkey foreign key (companion_id) references members(id) on delete set null;
+-- ---------------------------------------------------------------------------
+-- 账号绑定：匿名账号 → Apple 登录后，把家庭成员身份转移到新账号
+-- 流程：匿名用户先 create_transfer_token()，Apple 登录成功后 redeem_transfer_token(token)
+-- ---------------------------------------------------------------------------
+create table if not exists transfer_tokens (
+  token text primary key,
+  from_user uuid not null,
+  created_at timestamptz default now(),
+  used boolean default false
+);
+alter table transfer_tokens enable row level security;
+
+create or replace function create_transfer_token() returns text language plpgsql security definer set search_path = public as $$
+declare t text;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  t := encode(extensions.gen_random_bytes(24), 'hex');
+  insert into transfer_tokens (token, from_user) values (t, auth.uid());
+  return t;
+end $$;
+
+create or replace function redeem_transfer_token(p_token text) returns json language plpgsql security definer set search_path = public as $$
+declare rec transfer_tokens%rowtype; moved int;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  select * into rec from transfer_tokens where token = p_token and not used and created_at > now() - interval '15 minutes';
+  if not found then raise exception 'transfer token invalid'; end if;
+  if rec.from_user = auth.uid() then update transfer_tokens set used = true where token = p_token; return json_build_object('moved', 0); end if;
+  -- 新账号如果已经在别的家庭里，不覆盖
+  if exists (select 1 from members where user_id = auth.uid()) then raise exception 'already has family'; end if;
+  update members set user_id = auth.uid() where user_id = rec.from_user;
+  get diagnostics moved = row_count;
+  update families set created_by = auth.uid() where created_by = rec.from_user;
+  update transfer_tokens set used = true where token = p_token;
+  return json_build_object('moved', moved);
+end $$;
+
+-- 删除账号前的数据清理（auth 用户本身由 Edge Function 用 service role 删除）
+create or replace function delete_my_data() returns json language plpgsql security definer set search_path = public as $$
+declare fam uuid; role_ member_role; n_fam int := 0;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  for fam, role_ in select family_id, role from members where user_id = auth.uid() loop
+    if role_ = 'mom' then
+      delete from families where id = fam; -- 级联删除该家庭全部数据
+      n_fam := n_fam + 1;
+    else
+      delete from members where family_id = fam and user_id = auth.uid();
+    end if;
+  end loop;
+  return json_build_object('families_deleted', n_fam);
+end $$;
+
+grant execute on function create_transfer_token() to authenticated;
+grant execute on function redeem_transfer_token(text) to authenticated;
+grant execute on function delete_my_data() to authenticated;

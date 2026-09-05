@@ -106,7 +106,7 @@ export interface AppState {
   logs: DailyLog[];
   activities: Activity[];
   /** 云同步信息；null 为纯本地 */
-  cloud: { familyId: string; userId: string } | null;
+  cloud: { familyId: string; userId: string; bound?: boolean } | null;
   /** 本地提醒是否已开启（产检前一天、补充剂） */
   remindersEnabled?: boolean;
   /** 待产包（本版本本机保存） */

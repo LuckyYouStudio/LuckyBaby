@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { alert } from '../../src/lib/alert';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Pill, Row, Screen, Section } from '../../src/components/ui';
@@ -80,7 +81,7 @@ export default function Family() {
                     <Divider />
                     <Row style={{ justifyContent: 'space-between' }}>
                       <Caption>{m.role === 'dad' ? '可见：动态、产检、数值、用药' : '可见：孕周、动态、产检日程'}</Caption>
-                      <Pressable onPress={() => Alert.alert('移除成员', `确定把 ${m.name} 移出家庭？`, [{ text: '取消' }, { text: '移除', style: 'destructive', onPress: () => dispatch({ type: 'removeMember', id: m.id }) }])}>
+                      <Pressable onPress={() => alert('移除成员', `确定把 ${m.name} 移出家庭？`, [{ text: '取消' }, { text: '移除', style: 'destructive', onPress: () => dispatch({ type: 'removeMember', id: m.id }) }])}>
                         <Caption style={{ color: colors.warn }}>移除</Caption>
                       </Pressable>
                     </Row>
@@ -114,7 +115,7 @@ export default function Family() {
         </Section>
 
         {me.role === 'mom' && (
-          <Pressable style={{ marginTop: space.xxl, alignItems: 'center' }} onPress={() => Alert.alert('清空数据', '删除本机全部记录并重新开始？', [{ text: '取消' }, { text: '清空', style: 'destructive', onPress: () => dispatch({ type: 'reset' }) }])}>
+          <Pressable style={{ marginTop: space.xxl, alignItems: 'center' }} onPress={() => alert('清空数据', '删除本机全部记录并重新开始？', [{ text: '取消' }, { text: '清空', style: 'destructive', onPress: () => dispatch({ type: 'reset' }) }])}>
             <Caption style={{ color: colors.warn }}>清空本机数据</Caption>
           </Pressable>
         )}

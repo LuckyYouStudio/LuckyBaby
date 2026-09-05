@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { alert } from '../src/lib/alert';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../src/store/store';
 import { Body, Body2, Button, Caption, Field, H1, Screen } from '../src/components/ui';
@@ -59,7 +60,7 @@ export default function Onboarding() {
       const r = await createFamilyRemote(pregnancy, me.id);
       dispatch({ type: 'setup', pregnancy, me: { ...me, id: r.member_id }, familyCode: r.invite_code, cloud: { familyId: r.family_id, userId } });
     } catch (e: any) {
-      Alert.alert('连不上云端', `${e?.message ?? e}\n\n可以先在本机使用，之后再开云同步。`, [
+      alert('连不上云端', `${e?.message ?? e}\n\n可以先在本机使用，之后再开云同步。`, [
         { text: '取消' },
         { text: '先本机使用', onPress: () => dispatch({ type: 'setup', pregnancy, me }) },
       ]);
@@ -68,7 +69,7 @@ export default function Onboarding() {
 
   const join = async () => {
     if (!validJoin) return;
-    if (!cloudEnabled) { Alert.alert('云同步未配置', '请先在 .env 里填 Supabase 地址和密钥。'); return; }
+    if (!cloudEnabled) { alert('云同步未配置', '请先在 .env 里填 Supabase 地址和密钥。'); return; }
     setBusy(true);
     try {
       const userId = await ensureSession();
@@ -77,7 +78,7 @@ export default function Onboarding() {
       const me = slices.members.find((m) => m.id === r.memberId) ?? { id: r.memberId, name: jname.trim(), role, relation, joinedAt: new Date().toISOString() };
       dispatch({ type: 'joinFamily', pregnancy: r.pregnancy, me, familyCode: r.inviteCode, cloud: { familyId: r.familyId, userId }, slices });
     } catch (e: any) {
-      Alert.alert('没能加入', String(e?.message ?? e));
+      alert('没能加入', String(e?.message ?? e));
     } finally { setBusy(false); }
   };
 

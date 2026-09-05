@@ -8,7 +8,7 @@
 - supabase/schema.sql：M1 云同步数据模型与 RLS（尚未接入）
 
 ## 技术栈
-Expo SDK 57 + React Native 0.86 + TypeScript + expo-router（文件路由）。本地数据用 AsyncStorage（`src/store/store.tsx` 的 reducer 持久化），无后端。
+Expo SDK 57 + React Native 0.86 + TypeScript + expo-router（文件路由）。本地优先：AsyncStorage 持久化 reducer（`src/store/store.tsx`）；云同步用 Supabase（`src/lib/supabase.ts`、`src/store/sync.ts`），差异推送 + Realtime 拉取合并。没有 `.env` 时以纯本地模式运行。接入状态见 supabase/README.md。
 
 ## 运行
 ```bash
@@ -32,4 +32,6 @@ npx expo start          # 然后按 i 开 iOS 模拟器（Expo Go），或按 w 
 
 ## 已知
 - `expo start` 用 CI=1 会禁用热更新。
-- 本机 xcode-select 未指向 Xcode.app 时，Claude 的模拟器面板无法附加；Expo Go 仍可运行。
+- Web 端 `Alert` 是空实现，弹窗统一用 `src/lib/alert.ts`。
+- RLS 里被策略调用的函数（my_role/can_see）必须 SECURITY DEFINER，否则 members 表策略递归。
+- 云同步 e2e 测试：浏览器开 localhost 与 127.0.0.1 两个来源即两个匿名用户。

@@ -99,12 +99,13 @@ create table comments (
 );
 
 -- 当前用户在某家庭的角色
-create or replace function my_role(fid uuid) returns member_role language sql stable as $$
+-- SECURITY DEFINER：绕过 members 表自身的 RLS，否则策略会无限递归
+create or replace function my_role(fid uuid) returns member_role language sql stable security definer set search_path = public as $$
   select role from members where family_id = fid and user_id = auth.uid() limit 1
 $$;
 
 -- 可见性判断：mom 全可见；dad 看 partner/family；family 只看 family
-create or replace function can_see(fid uuid, v visibility) returns boolean language sql stable as $$
+create or replace function can_see(fid uuid, v visibility) returns boolean language sql stable security definer set search_path = public as $$
   select case my_role(fid)
     when 'mom' then true
     when 'dad' then v <> 'self'
@@ -150,9 +151,17 @@ create policy "write comments" on comments for insert with check (exists (select
 alter table families add column if not exists created_by uuid references auth.users(id);
 alter table activities alter column ref_id type text;
 
-create or replace function gen_invite_code() returns text language sql volatile as $$
-  select upper(substr(translate(encode(gen_random_bytes(6), 'base64'), '+/=0O1Il', 'ABCDEFGH'), 1, 6))
-$$;
+-- 6 位邀请码，去掉易混淆字符（0/O、1/I/L）
+create or replace function gen_invite_code() returns text language plpgsql volatile as $$
+declare
+  alphabet constant text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  code text := '';
+begin
+  for i in 1..6 loop
+    code := code || substr(alphabet, 1 + floor(random() * length(alphabet))::int, 1);
+  end loop;
+  return code;
+end $$;
 
 -- 准妈妈创建家庭（SECURITY DEFINER：此时她还不是任何家庭成员，走不了 RLS）
 create or replace function create_family(

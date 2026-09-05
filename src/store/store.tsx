@@ -9,6 +9,7 @@ import { cloudEnabled, ensureSession } from '../lib/supabase';
 import { myFamilyRemote, pullAll, pushDiff, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 
 const KEY = 'luckybaby.state.v1';
+const SYNCED_KEY = 'luckybaby.synced.v1'; // 上次与云端一致的快照
 
 export const emptyState: AppState = {
   onboarded: false,
@@ -156,11 +157,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(KEY);
+        const [raw, rawSynced] = await Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(SYNCED_KEY)]);
         if (raw) {
           const st = { ...emptyState, ...JSON.parse(raw) } as AppState;
           dispatch({ type: 'hydrate', state: st });
-          if (st.cloud) lastSynced.current = st;
+          // 没有快照时视为全部未同步：下次推送会把本地全量 upsert 一遍（幂等）
+          if (st.cloud && rawSynced) lastSynced.current = { ...emptyState, ...JSON.parse(rawSynced) } as AppState;
         } else if (cloudEnabled) {
           const userId = await ensureSession();
           const mine = await myFamilyRemote();
@@ -192,8 +194,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       await pushDiff(lastSynced.current, st, st.cloud.familyId);
       lastSynced.current = st;
+      AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(st)).catch(() => {});
       setSync('synced');
-    } catch {
+    } catch (e) {
+      console.warn('[sync] push failed', e);
       setSync('offline');
     } finally {
       pushing.current = false;
@@ -217,9 +221,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setTimeout(() => {
         const merged = stateRef.current;
         lastSynced.current = { ...merged, ...slices } as AppState;
+        AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(lastSynced.current)).catch(() => {});
         setSync('synced');
       }, 0);
-    } catch {
+    } catch (e) {
+      console.warn('[sync] pull failed', e);
       setSync('offline');
     }
   };

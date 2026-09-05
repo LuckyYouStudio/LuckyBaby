@@ -42,3 +42,6 @@ yarn-error.*
 
 # 本地环境变量
 .env
+
+# Supabase CLI 本地临时文件
+supabase/.temp/

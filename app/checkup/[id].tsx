@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { alert } from '../../src/lib/alert';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Field, Pill, Row, Screen, Section } from '../../src/components/ui';
@@ -147,7 +148,7 @@ export default function CheckupDetail() {
               {!c.done && <Button title="标记完成并保存" onPress={() => save(true)} />}
               <Button title={c.done ? '保存' : '仅保存'} kind="ghost" onPress={() => save()} />
               {c.done && <Button title="改回未完成" kind="ghost" onPress={() => { setC({ ...c, done: false }); dispatch({ type: 'upsertCheckup', checkup: { ...c, done: false } }); }} />}
-              <Pressable style={{ alignItems: 'center', marginTop: 8 }} onPress={() => Alert.alert('删除这次产检', c.title, [{ text: '取消' }, { text: '删除', style: 'destructive', onPress: () => { dispatch({ type: 'deleteCheckup', id: c.id }); router.back(); } }])}>
+              <Pressable style={{ alignItems: 'center', marginTop: 8 }} onPress={() => alert('删除这次产检', c.title, [{ text: '取消' }, { text: '删除', style: 'destructive', onPress: () => { dispatch({ type: 'deleteCheckup', id: c.id }); router.back(); } }])}>
                 <Caption style={{ color: colors.warn }}>删除</Caption>
               </Pressable>
             </View>

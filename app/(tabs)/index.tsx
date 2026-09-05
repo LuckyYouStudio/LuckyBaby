@@ -7,7 +7,7 @@ import { Avatar, Body, Body2, Button, Caption, Card, H1, H2, Pill, Row, Screen, 
 import { Feed } from '../../src/components/Feed';
 import { colors, roleColor, space } from '../../src/theme';
 import { babyOfWeek } from '../../src/data/babySize';
-import { fmtDate, fmtRelative, trimester } from '../../src/lib/pregnancy';
+import { fmtDate, fmtRelative, fmtTime, trimester } from '../../src/lib/pregnancy';
 
 export default function Today() {
   const { state, dispatch } = useStore();
@@ -76,7 +76,7 @@ export default function Today() {
                       <Body style={log ? { color: colors.ink3, textDecorationLine: 'line-through' } : undefined}>
                         {s.name} · {s.dose}
                       </Body>
-                      <Caption>{log && who ? `${who.name} 记于 ${log.at.slice(11, 16)}` : `${s.timeOfDay}${s.note ? ' · ' + s.note : ''}`}</Caption>
+                      <Caption>{log && who ? `${who.name} 记于 ${fmtTime(log.at).replace('今天 ', '')}` : `${s.timeOfDay}${s.note ? ' · ' + s.note : ''}`}</Caption>
                     </View>
                   </Pressable>
                 );

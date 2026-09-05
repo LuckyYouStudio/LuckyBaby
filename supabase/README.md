@@ -1,5 +1,14 @@
 # 云同步（Supabase）接入
 
+## 当前状态（2026-09-05）
+
+- 项目：`luckybaby`，ref `wpjmmgqqdyycmxlnnkfd`，区域东京（ap-northeast-1）。Dashboard：https://supabase.com/dashboard/project/wpjmmgqqdyycmxlnnkfd
+- schema.sql 已执行；匿名登录已开启（config.toml → `supabase config push`）。
+- 本机 `.env` 已填 URL / anon key / 数据库密码（不入库）。换机器时从 Dashboard → Project Settings → API 重新复制。
+- 已实测：建家庭 → 邀请码加入 → 打卡与陪产检实时同步到对方。
+- 账号下另有一个注册时自动生成的默认项目（美国东部），未使用，可在 Dashboard 删除。
+- 后续改 schema：改完 `schema.sql` 后执行 `supabase db query --linked --file supabase/schema.sql`（注意脚本非幂等，建表语句重复执行会报错，可只执行改动片段）。
+
 ## 一次性准备（需要你的 Supabase 账号）
 
 1. 登录 CLI（会打开浏览器）：

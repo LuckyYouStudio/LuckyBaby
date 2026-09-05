@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import { alert } from '../../src/lib/alert';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -12,6 +13,7 @@ export default function Family() {
   const { me } = useDerived();
   const router = useRouter();
   const [draft, setDraft] = useState('');
+  const [copied, setCopied] = useState(false);
   if (!me) return null;
 
   const stats = (id: string) => {
@@ -31,6 +33,10 @@ export default function Family() {
               <Text style={{ fontSize: 26, fontWeight: '700', color: colors.pine, letterSpacing: 4, fontVariant: ['tabular-nums'] }}>{state.familyCode}</Text>
             </View>
             {me.role === 'mom' && !state.cloud && <Button title="添加成员" small onPress={() => router.push('/member/new')} />}
+          </Row>
+          <Row style={{ gap: 8, marginTop: space.md }}>
+            <Button title={copied ? '已复制' : '复制'} small kind="ghost" onPress={async () => { await Clipboard.setStringAsync(state.familyCode); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
+            <Button title="二维码 / 分享" small onPress={() => router.push('/invite' as never)} />
           </Row>
           <Caption style={{ color: colors.pine, marginTop: 6 }}>
             {state.cloud

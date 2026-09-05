@@ -17,7 +17,7 @@ function Gate() {
 
   useEffect(() => {
     if (!ready) return;
-    const inOnboarding = segments[0] === 'onboarding' || segments[0] === 'demo';
+    const inOnboarding = ['onboarding', 'demo', 'join', 'scan'].includes(segments[0]);
     if (!state.onboarded && !inOnboarding) router.replace('/onboarding');
     if (state.onboarded && inOnboarding) router.replace('/');
   }, [ready, state.onboarded, segments]);
@@ -45,6 +45,9 @@ function Gate() {
       <Stack.Screen name="contractions" options={{ title: '宫缩计时', presentation: 'fullScreenModal' }} />
       <Stack.Screen name="packing" options={{ title: '待产包' }} />
       <Stack.Screen name="settings" options={{ title: '外观与字号' }} />
+      <Stack.Screen name="invite" options={{ title: '邀请家人', presentation: 'modal' }} />
+      <Stack.Screen name="scan" options={{ title: '扫码加入', presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="join" options={{ headerShown: false }} />
     </Stack>
     </>
   );

@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { extractCode } from '../src/lib/invite';
 import { alert } from '../src/lib/alert';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../src/store/store';
-import { Body, Body2, Button, Caption, Field, H1, Screen } from '../src/components/ui';
+import { Body, Body2, Button, Caption, Field, H1, Row, Screen } from '../src/components/ui';
 import { colors, roleColor, space } from '../src/theme';
 import { addDays, dueFromLmp, today, uid } from '../src/lib/pregnancy';
 import { cloudEnabled, ensureSession } from '../src/lib/supabase';
@@ -31,7 +34,9 @@ function Choice<T extends string>({ value, options, onChange }: { value: T; opti
 export default function Onboarding() {
   const { dispatch } = useStore();
   const insets = useSafeAreaInsets();
-  const [flow, setFlow] = useState<'create' | 'join'>('create');
+  const router = useRouter();
+  const params = useLocalSearchParams<{ code?: string }>();
+  const [flow, setFlow] = useState<'create' | 'join'>(params.code ? 'join' : 'create');
   const [busy, setBusy] = useState(false);
 
   // 建立家庭
@@ -43,7 +48,13 @@ export default function Onboarding() {
   const dueDate = mode === 'lmp' ? dueFromLmp(date) : date;
 
   // 加入家庭
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(extractCode(params.code ?? '') ?? '');
+  useEffect(() => { const c = extractCode(params.code ?? ''); if (c) { setCode(c); setFlow('join'); } }, [params.code]);
+  const paste = async () => {
+    const t = await Clipboard.getStringAsync();
+    const c = extractCode(t);
+    if (c) setCode(c); else alert('剪贴板里没有邀请码', '让家人把 6 位邀请码或邀请链接发给你，复制后再点粘贴。');
+  };
   const [jname, setJname] = useState('');
   const [role, setRole] = useState<Role>('dad');
   const [relation, setRelation] = useState('老公');
@@ -106,6 +117,10 @@ export default function Onboarding() {
             <>
               <Body2 style={{ marginBottom: space.xl }}>让准妈妈把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。</Body2>
               <Field label="邀请码" value={code} onChange={(t) => setCode(t.toUpperCase())} placeholder="例如：TY7K2Q" />
+              <Row style={{ gap: 8, marginTop: -8, marginBottom: space.lg }}>
+                <Button title="粘贴邀请码" small kind="ghost" onPress={paste} />
+                <Button title="扫二维码" small kind="ghost" onPress={() => router.push('/scan' as never)} />
+              </Row>
               <Field label="你的称呼" value={jname} onChange={setJname} placeholder={role === 'dad' ? '例如：阿强' : '例如：外婆'} />
               <Caption style={{ marginBottom: 6 }}>你是</Caption>
               <Choice value={role} onChange={(r) => { setRole(r); setRelation(r === 'dad' ? '老公' : ''); }} options={[

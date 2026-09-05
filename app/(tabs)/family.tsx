@@ -9,7 +9,7 @@ import { Feed } from '../../src/components/Feed';
 import { colors, roleColor, space } from '../../src/theme';
 
 export default function Family() {
-  const { state, dispatch, sync, refresh } = useStore();
+  const { state, dispatch, sync, syncError, refresh } = useStore();
   const { me } = useDerived();
   const router = useRouter();
   const [draft, setDraft] = useState('');
@@ -46,7 +46,7 @@ export default function Family() {
           {state.cloud && (
             <Pressable onPress={refresh} style={{ marginTop: 6 }}>
               <Caption style={{ color: sync === 'offline' ? colors.warn : colors.pine }}>
-                {sync === 'syncing' ? '同步中…' : sync === 'offline' ? '离线，改动会在恢复网络后同步 · 点此重试' : '已同步 · 点此刷新'}
+                {sync === 'syncing' ? '同步中…' : sync === 'offline' ? `暂时没同步上（${syncError || '网络不通'}），会自动重试 · 点此立即重试` : '已同步 · 点此刷新'}
               </Caption>
             </Pressable>
           )}

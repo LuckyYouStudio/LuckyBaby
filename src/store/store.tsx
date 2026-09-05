@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { AppState as AppStateRN } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Supplement, SupplementLog, Visibility } from '../data/types';
 import { CHECKUP_TEMPLATES, defaultBring, defaultPacking } from '../data/schedule';
@@ -140,7 +141,8 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, logs: [...s.logs, a.log], activities };
     }
     case 'deleteLog':
-      return { ...s, logs: s.logs.filter((l) => l.id !== a.id) };
+      // 连带删掉这条记录产生的动态（例如换了心情）
+      return { ...s, logs: s.logs.filter((l) => l.id !== a.id), activities: s.activities.filter((x) => x.refId !== a.id) };
     case 'like':
       return { ...s, activities: s.activities.map((x) => (x.id !== a.activityId ? x : { ...x, likes: x.likes.includes(a.byId) ? x.likes.filter((i) => i !== a.byId) : [...x.likes, a.byId] })) };
     case 'comment':
@@ -164,12 +166,14 @@ function reducer(s: AppState, a: Action): AppState {
   }
 }
 
-const Ctx = createContext<{ state: AppState; dispatch: React.Dispatch<Action>; ready: boolean; sync: SyncStatus; refresh: () => void } | null>(null);
+const Ctx = createContext<{ state: AppState; dispatch: React.Dispatch<Action>; ready: boolean; sync: SyncStatus; syncError: string; refresh: () => void } | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, emptyState);
   const [ready, setReady] = useState(false);
   const [sync, setSync] = useState<SyncStatus>('local');
+  const [syncError, setSyncError] = useState('');
+  const describe = (e: unknown) => { const m = (e as any)?.message ?? String(e); return /Network request failed|fetch/i.test(m) ? '网络不通' : m.slice(0, 80); };
   const hydrated = useRef(false);
   const lastSynced = useRef<AppState>(emptyState); // 上次与云端一致的快照
   const pushing = useRef(false);
@@ -218,10 +222,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       await pushDiff(lastSynced.current, st, st.cloud.familyId);
       lastSynced.current = st;
       AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(st)).catch(() => {});
-      setSync('synced');
+      setSync('synced'); setSyncError('');
     } catch (e) {
       console.warn('[sync] push failed', e);
-      setSync('offline');
+      setSync('offline'); setSyncError('上传失败：' + describe(e));
     } finally {
       pushing.current = false;
       if (stateRef.current !== lastSynced.current && stateRef.current.cloud) setTimeout(push, 3000);
@@ -260,20 +264,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const merged = stateRef.current;
         lastSynced.current = { ...merged, ...slices } as AppState;
         AsyncStorage.setItem(SYNCED_KEY, JSON.stringify(lastSynced.current)).catch(() => {});
-        setSync('synced');
+        setSync('synced'); setSyncError('');
       }, 0);
+      // 拉完顺便把没推上去的推一下
+      if (stateRef.current !== lastSynced.current) push();
     } catch (e) {
       console.warn('[sync] pull failed', e);
-      setSync('offline');
+      setSync('offline'); setSyncError('下载失败：' + describe(e));
     }
   };
   useEffect(() => {
     if (!state.cloud) { setSync('local'); return; }
     pull();
-    return subscribe(state.cloud.familyId, pull);
+    const unsub = subscribe(state.cloud.familyId, pull);
+    // 回到前台就同步一次；实时通道不可用时每 60 秒轮询兜底
+    const onAppState = (st: string) => { if (st === 'active') pull(); };
+    const sub = AppStateRN.addEventListener('change', onAppState);
+    const timer = setInterval(() => { if (AppStateRN.currentState === 'active') pull(); }, 60_000);
+    return () => { unsub(); sub.remove(); clearInterval(timer); };
   }, [state.cloud?.familyId]);
 
-  const value = useMemo(() => ({ state, dispatch, ready, sync, refresh: pull }), [state, ready, sync]);
+  const value = useMemo(() => ({ state, dispatch, ready, sync, syncError, refresh: pull }), [state, ready, sync, syncError]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

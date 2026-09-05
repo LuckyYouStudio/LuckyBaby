@@ -13,7 +13,7 @@
 - 隐私政策 URL：https://wpjmmgqqdyycmxlnnkfd.supabase.co/functions/v1/legal?doc=privacy
 - 用户协议 URL（可选，填在"许可协议"或描述里）：https://wpjmmgqqdyycmxlnnkfd.supabase.co/functions/v1/legal?doc=terms
 - 技术支持 URL：同隐私政策页（上线前建议换成自己的域名）
-- 联系邮箱：待确认（当前占位 hello@luckyyoustudio.com）
+- 联系邮箱：liushuang19920505@gmail.com
 
 ## 关键词（100 字符，逗号分隔）
 中文：孕期,怀孕,产检,孕妇,准爸爸,胎动,宫缩,叶酸,预产期,家庭,记录,待产包

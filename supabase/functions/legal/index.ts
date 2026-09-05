@@ -22,7 +22,7 @@ const privacyZh = `<h1>幸运宝贝 隐私政策</h1>
 <li>随时在 App 内查看、修改、删除任何记录。</li>
 <li>准妈妈可随时移出家庭成员。</li>
 <li>在「家庭」页可<strong>删除账号</strong>：准妈妈删除账号会删除整个家庭的云端数据；其他成员删除账号会退出家庭并删除自己的登录信息。删除不可恢复。</li>
-<li>可联系我们索取数据副本或提出其他请求：<a href="mailto:hello@luckyyoustudio.com">hello@luckyyoustudio.com</a>。</li>
+<li>可联系我们索取数据副本或提出其他请求：<a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a>。</li>
 </ul>
 <h2>6. 未成年人</h2>
 <p>本应用面向成年人。我们不会主动收集未成年人信息。</p>
@@ -51,7 +51,7 @@ const privacyEn = `<h1>LuckyBaby Privacy Policy</h1>
 <li>View, edit or delete any record in the app at any time.</li>
 <li>The mom-to-be can remove members at any time.</li>
 <li><strong>Delete account</strong> on the Family tab: the mom-to-be's deletion removes the whole family's cloud data; other members leave the family and delete their sign-in. Deletion is permanent.</li>
-<li>Contact us for a data copy or other requests: <a href="mailto:hello@luckyyoustudio.com">hello@luckyyoustudio.com</a>.</li>
+<li>Contact us for a data copy or other requests: <a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a>.</li>
 </ul>
 <h2>6. Children</h2>
 <p>The app is for adults. We do not knowingly collect data from children.</p>
@@ -67,7 +67,7 @@ const termsZh = `<h1>幸运宝贝 用户协议</h1>
 <h2>4. 数据与隐私</h2><p>见<a href="?doc=privacy&lang=zh">隐私政策</a>。</p>
 <h2>5. 免责</h2><p>在法律允许范围内，我们不对因使用或无法使用本应用造成的损失承担责任。请定期确认云端同步正常。</p>
 <h2>6. 终止</h2><p>你可随时删除账号。我们可在违反本协议时终止服务。</p>
-<h2>7. 联系</h2><p><a href="mailto:hello@luckyyoustudio.com">hello@luckyyoustudio.com</a></p>`;
+<h2>7. 联系</h2><p><a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a></p>`;
 
 const termsEn = `<h1>LuckyBaby Terms of Use</h1>
 <h2>1. The service</h2><p>LuckyBaby provides pregnancy journaling, family sharing and reminders. It is currently a free beta and features may change.</p>
@@ -76,7 +76,7 @@ const termsEn = `<h1>LuckyBaby Terms of Use</h1>
 <h2>4. Data and privacy</h2><p>See the <a href="?doc=privacy&lang=en">Privacy Policy</a>.</p>
 <h2>5. Liability</h2><p>To the extent permitted by law, we are not liable for losses arising from use of or inability to use the app. Please check that cloud sync is working regularly.</p>
 <h2>6. Termination</h2><p>You may delete your account at any time. We may terminate service for breaches of these terms.</p>
-<h2>7. Contact</h2><p><a href="mailto:hello@luckyyoustudio.com">hello@luckyyoustudio.com</a></p>`;
+<h2>7. Contact</h2><p><a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a></p>`;
 
 Deno.serve((req) => {
   const u = new URL(req.url);

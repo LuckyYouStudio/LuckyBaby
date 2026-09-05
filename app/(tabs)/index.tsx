@@ -7,7 +7,17 @@ import { Avatar, Body, Body2, Button, Caption, Card, H1, H2, Pill, Row, Screen, 
 import { Feed } from '../../src/components/Feed';
 import { colors, roleColor, space } from '../../src/theme';
 import { babyOfWeek } from '../../src/data/babySize';
-import { fmtDate, fmtRelative, fmtTime, trimester } from '../../src/lib/pregnancy';
+import { fmtDate, fmtRelative, fmtTime, trimester, uid } from '../../src/lib/pregnancy';
+import { requestReminderPermission } from '../../src/lib/reminders';
+import { alert } from '../../src/lib/alert';
+import { Platform } from 'react-native';
+
+const QUICK = [
+  { t: '还好', e: '🙂', fg: colors.pine, bg: colors.pineSoft },
+  { t: '吐了', e: '🤢', fg: colors.warn, bg: colors.warnSoft },
+  { t: '累瘫', e: '😪', fg: colors.slate, bg: colors.slateSoft },
+  { t: '不舒服', e: '😣', fg: colors.apricot, bg: colors.apricotSoft },
+];
 
 export default function Today() {
   const { state, dispatch } = useStore();
@@ -24,6 +34,17 @@ export default function Today() {
   const dueSupplements = state.supplements.filter((s) => s.active && g.week >= s.weekFrom && g.week <= s.weekTo && canSee(s.visibility));
   const taken = (id: string) => state.supplementLogs.find((l) => l.supplementId === id && l.date === today);
   const progress = Math.max(0, Math.min(1, g.totalDays / 280));
+  const todayMood = state.logs.find((l) => l.kind === 'mood' && l.date === today && l.byId === me.id);
+  const quick = (t: string) => {
+    if (todayMood) dispatch({ type: 'deleteLog', id: todayMood.id });
+    if (todayMood?.text === t) return;
+    dispatch({ type: 'addLog', log: { id: uid(), kind: 'mood', date: today, text: t, byId: me.id, at: new Date().toISOString(), visibility: 'family' }, activity: `今天${t}` });
+  };
+  const enableReminders = async () => {
+    const ok = await requestReminderPermission();
+    if (!ok) { alert('没有拿到通知权限', '可以在系统设置里给「幸运宝贝」打开通知，再回来开启。'); return; }
+    dispatch({ type: 'setReminders', enabled: true });
+  };
   const nick = state.pregnancy.babyNickname ?? '宝宝';
 
   return (
@@ -46,6 +67,35 @@ export default function Today() {
           <Caption>孕{['早', '中', '晚'][trimester(g.week) - 1]}期</Caption>
           <Caption>距预产期 {g.daysLeft} 天 · {fmtDate(state.pregnancy.dueDate)}</Caption>
         </Row>
+
+        {me.role === 'mom' && (
+          <View style={{ marginBottom: space.lg }}>
+            <Caption style={{ marginBottom: 6 }}>今天怎么样？点一下就行</Caption>
+            <Row style={{ gap: 8 }}>
+              {QUICK.map((q) => {
+                const on = todayMood?.text === q.t;
+                return (
+                  <Pressable key={q.t} onPress={() => quick(q.t)} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, borderColor: on ? q.fg : colors.line, backgroundColor: on ? q.bg : colors.card }}>
+                    <Text style={{ fontSize: 22 }}>{q.e}</Text>
+                    <Text style={{ fontWeight: '700', color: on ? q.fg : colors.ink2, marginTop: 2 }}>{q.t}</Text>
+                  </Pressable>
+                );
+              })}
+            </Row>
+          </View>
+        )}
+
+        {!state.remindersEnabled && me.role !== 'family' && Platform.OS !== 'web' && (
+          <Card style={{ marginBottom: space.lg, backgroundColor: colors.apricotSoft, borderColor: colors.apricotSoft }}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Body style={{ fontWeight: '700', color: colors.ink }}>让手机提醒，不用记</Body>
+                <Caption>产检前一晚说要不要空腹、带什么；补充剂到点提醒。</Caption>
+              </View>
+              <Button title="开启" small onPress={enableReminders} />
+            </Row>
+          </Card>
+        )}
 
         <Card style={{ backgroundColor: colors.pineSoft, borderColor: colors.pineSoft }}>
           <Caption style={{ color: colors.pine }}>本周的{nick}</Caption>

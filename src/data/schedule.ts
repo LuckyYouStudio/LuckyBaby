@@ -32,6 +32,21 @@ export const METRIC_DEFS: { key: string; label: string; unit: string; ref: strin
   { key: 'hb', label: '血红蛋白', unit: 'g/L', ref: '≥ 110', low: 110 },
 ];
 
+/** 每次产检默认要带的东西 */
+export const DEFAULT_BRING = ['病历本（大白本）', '母子健康手册 / 电子条码', '医保卡 / 就诊码'];
+export function defaultBring(notes?: string) {
+  const items = [...DEFAULT_BRING];
+  if (notes && notes.includes('空腹')) items.push('早餐（抽完血就吃）');
+  if (notes && notes.includes('憋尿')) items.push('一瓶水（到了再喝）');
+  return items.map((text) => ({ text, done: false }));
+}
+
+export const PACKING_TEMPLATE: { group: string; text: string }[] = [
+  { group: '证件', text: '双方身份证' }, { group: '证件', text: '母子健康手册、产检病历' }, { group: '证件', text: '医保卡 / 生育保险材料' }, { group: '证件', text: '准生证 / 生育登记' },
+  { group: '妈妈', text: '产褥垫、一次性内裤' }, { group: '妈妈', text: '哺乳文胸、防溢乳垫' }, { group: '妈妈', text: '出院衣服、拖鞋、袜子' }, { group: '妈妈', text: '洗漱用品、毛巾' }, { group: '妈妈', text: '吸管杯、巧克力 / 红牛' }, { group: '妈妈', text: '手机充电线、长充电线' },
+  { group: '宝宝', text: 'NB 码纸尿裤' }, { group: '宝宝', text: '连体衣 2–3 套、包被' }, { group: '宝宝', text: '奶瓶、少量奶粉（备用）' }, { group: '宝宝', text: '湿巾、纱布巾、棉柔巾' }, { group: '宝宝', text: '出院用的安全提篮 / 抱被' },
+];
+
 export function metricFlag(key: string, value: number): 'ok' | 'high' | 'low' | 'na' {
   const d = METRIC_DEFS.find((m) => m.key === key);
   if (!d || (d.low === undefined && d.high === undefined)) return 'na';

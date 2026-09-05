@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Supplement, SupplementLog, Visibility } from '../data/types';
-import { CHECKUP_TEMPLATES } from '../data/schedule';
+import { CHECKUP_TEMPLATES, PACKING_TEMPLATE, defaultBring } from '../data/schedule';
 import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { dateOfWeek, gestation, today, uid } from '../lib/pregnancy';
 import { demoState } from './demo';
 import { cloudEnabled, ensureSession } from '../lib/supabase';
 import { myFamilyRemote, pullAll, pushDiff, subscribe, type CloudInfo, type RemoteSlices } from './sync';
+import { cancelReminders, rescheduleReminders } from '../lib/reminders';
 
 const KEY = 'luckybaby.state.v1';
 const SYNCED_KEY = 'luckybaby.synced.v1'; // 上次与云端一致的快照
@@ -45,14 +46,17 @@ type Action =
   | { type: 'deleteLog'; id: string }
   | { type: 'like'; activityId: string; byId: string }
   | { type: 'comment'; activityId: string; byId: string; text: string }
-  | { type: 'post'; byId: string; text: string };
+  | { type: 'post'; byId: string; text: string }
+  | { type: 'setReminders'; enabled: boolean }
+  | { type: 'togglePacking'; id: string; byId: string }
+  | { type: 'addPacking'; group: string; text: string };
 
 function act(byId: string, kind: Activity['kind'], text: string, visibility: Visibility = 'family', refId?: string): Activity {
   return { id: uid(), at: new Date().toISOString(), byId, kind, text, refId, visibility, likes: [], comments: [] };
 }
 
 function seedFromTemplates(dueDate: string): { checkups: Checkup[]; supplements: Supplement[] } {
-  const checkups: Checkup[] = CHECKUP_TEMPLATES.map((t) => ({ ...t, id: uid(), date: dateOfWeek(dueDate, t.weekFrom), done: false, metrics: [], visibility: 'partner', fromTemplate: true }));
+  const checkups: Checkup[] = CHECKUP_TEMPLATES.map((t) => ({ ...t, id: uid(), date: dateOfWeek(dueDate, t.weekFrom), done: false, metrics: [], visibility: 'partner', fromTemplate: true, bringItems: defaultBring(t.notes) }));
   const supplements: Supplement[] = SUPPLEMENT_TEMPLATES.map((t) => ({ ...t, id: uid(), active: true, visibility: 'partner' }));
   return { checkups, supplements };
 }
@@ -89,7 +93,8 @@ function reducer(s: AppState, a: Action): AppState {
       return {
         ...s,
         members: mergeSlice(a.slices.members, s.members, L.members),
-        checkups: mergeSlice(a.slices.checkups, s.checkups, L.checkups),
+        // 报告照片只存本机：合并后把本地照片贴回去
+        checkups: mergeSlice(a.slices.checkups, s.checkups, L.checkups).map((c) => ({ ...c, photos: s.checkups.find((x) => x.id === c.id)?.photos ?? c.photos })),
         supplements: mergeSlice(a.slices.supplements, s.supplements, L.supplements),
         supplementLogs: mergeSlice(a.slices.supplementLogs, s.supplementLogs, L.supplementLogs),
         logs: mergeSlice(a.slices.logs, s.logs, L.logs),
@@ -136,6 +141,16 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, activities: s.activities.map((x) => (x.id !== a.activityId ? x : { ...x, comments: [...x.comments, { id: uid(), byId: a.byId, text: a.text, at: new Date().toISOString() }] })) };
     case 'post':
       return { ...s, activities: [act(a.byId, 'log', a.text, 'family'), ...s.activities] };
+    case 'setReminders':
+      return { ...s, remindersEnabled: a.enabled };
+    case 'togglePacking': {
+      const packing = (s.packing && s.packing.length ? s.packing : PACKING_TEMPLATE.map((t) => ({ ...t, id: uid(), done: false })));
+      return { ...s, packing: packing.map((p) => (p.id !== a.id ? p : { ...p, done: !p.done, byId: p.done ? undefined : a.byId })) };
+    }
+    case 'addPacking': {
+      const packing = (s.packing && s.packing.length ? s.packing : PACKING_TEMPLATE.map((t) => ({ ...t, id: uid(), done: false })));
+      return { ...s, packing: [...packing, { id: uid(), group: a.group, text: a.text, done: false }] };
+    }
     default:
       return s;
   }
@@ -209,6 +224,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const t = setTimeout(push, 400);
     return () => clearTimeout(t);
   }, [state]);
+
+  // 3b. 提醒：状态变化后重排（防抖）
+  const reminderKey = JSON.stringify({ e: state.remindersEnabled, c: state.checkups.map((c) => [c.id, c.date, c.done, c.hospital, c.bringItems]), s: state.supplements.map((x) => [x.id, x.active, x.timeOfDay, x.weekFrom, x.weekTo]), d: state.pregnancy.dueDate });
+  useEffect(() => {
+    if (!hydrated.current) return;
+    if (!state.remindersEnabled) { cancelReminders(); return; }
+    const t = setTimeout(() => rescheduleReminders(stateRef.current), 800);
+    return () => clearTimeout(t);
+  }, [reminderKey]);
 
   // 4. 拉取远端改动（实时 + 首次）
   const pull = async () => {

@@ -14,11 +14,12 @@ const toCheckup = (r: Row): Checkup => ({
   date: (r.date as string) ?? undefined, hospital: (r.hospital as string) ?? undefined, items: (r.items as string[]) ?? [],
   notes: (r.notes as string) ?? undefined, companionId: (r.companion_id as string) ?? undefined, done: !!r.done,
   metrics: (r.metrics as Checkup['metrics']) ?? [], result: (r.result as string) ?? undefined, visibility: r.visibility as Checkup['visibility'],
+  bringItems: (r.bring_items as Checkup['bringItems']) ?? [],
 });
 const fromCheckup = (c: Checkup, fid: string): Row => ({
   id: c.id, family_id: fid, title: c.title, week_from: c.weekFrom, week_to: c.weekTo, date: c.date ?? null, hospital: c.hospital ?? null,
   items: c.items, notes: c.notes ?? null, companion_id: c.companionId ?? null, done: c.done, metrics: c.metrics, result: c.result ?? null,
-  visibility: c.visibility, updated_at: new Date().toISOString(),
+  visibility: c.visibility, bring_items: c.bringItems ?? [], updated_at: new Date().toISOString(),
 });
 const toSupplement = (r: Row): Supplement => ({
   id: r.id as string, name: r.name as string, dose: (r.dose as string) ?? '', timeOfDay: (r.time_of_day as string) ?? '08:00',
@@ -104,7 +105,8 @@ async function diffTable<T extends { id: string }>(table: string, prev: T[], nex
 }
 
 export async function pushDiff(prev: AppState, next: AppState, fid: string) {
-  await diffTable('checkups', prev.checkups, next.checkups, (c) => fromCheckup(c, fid));
+  const noPhotos = (c: Checkup) => ({ ...c, photos: undefined });
+  await diffTable('checkups', prev.checkups.map(noPhotos), next.checkups.map(noPhotos), (c) => fromCheckup(c, fid));
   await diffTable('supplements', prev.supplements, next.supplements, (s) => fromSupplement(s, fid));
   await diffTable('supplement_logs', prev.supplementLogs, next.supplementLogs, (l) => fromSupLog(l, fid));
   await diffTable('daily_logs', prev.logs, next.logs, (l) => fromLog(l, fid));

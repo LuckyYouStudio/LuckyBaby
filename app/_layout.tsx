@@ -33,6 +33,8 @@ function Gate() {
       <Stack.Screen name="checkup/[id]" options={{ title: '产检', presentation: 'card' }} />
       <Stack.Screen name="log/new" options={{ title: '记一笔', presentation: 'modal' }} />
       <Stack.Screen name="member/new" options={{ title: '邀请家人', presentation: 'modal' }} />
+      <Stack.Screen name="kicks" options={{ title: '数胎动', presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="packing" options={{ title: '待产包' }} />
     </Stack>
   );
 }

@@ -37,6 +37,16 @@ export interface Checkup {
   result?: string; // 结果备注
   visibility: Visibility;
   fromTemplate?: boolean;
+  bringItems?: { text: string; done: boolean }[]; // 带什么
+  photos?: string[]; // 报告照片（本机 URI，暂不同步）
+}
+
+export interface PackingItem {
+  id: string;
+  group: string; // 证件 / 妈妈 / 宝宝
+  text: string;
+  done: boolean;
+  byId?: string; // 谁准备的
 }
 
 export interface Supplement {
@@ -97,4 +107,8 @@ export interface AppState {
   activities: Activity[];
   /** 云同步信息；null 为纯本地 */
   cloud: { familyId: string; userId: string } | null;
+  /** 本地提醒是否已开启（产检前一天、补充剂） */
+  remindersEnabled?: boolean;
+  /** 待产包（本版本本机保存） */
+  packing?: PackingItem[];
 }

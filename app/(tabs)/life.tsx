@@ -46,6 +46,8 @@ export default function Life() {
   if (!me) return null;
 
   const logs = state.logs.filter((l) => canSee(l.visibility)).sort((a, b) => (a.at < b.at ? 1 : -1));
+  const packTotal = state.packing?.length || 15;
+  const packDone = state.packing?.filter((p) => p.done).length ?? 0;
   const weights = logs.filter((l) => l.kind === 'weight' && l.value != null).sort((a, b) => (a.date < b.date ? -1 : 1)).map((l) => ({ date: l.date, value: l.value! }));
   const lastW = weights[weights.length - 1];
   const firstW = weights[0];
@@ -55,6 +57,20 @@ export default function Life() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: 40 }}>
+        {me.role !== 'family' && (
+          <Row style={{ gap: 10 }}>
+            <Card style={{ flex: 1, backgroundColor: colors.pineSoft, borderColor: colors.pineSoft }} onPress={() => router.push('/kicks')}>
+              <Text style={{ fontSize: 26 }}>👣</Text>
+              <Body style={{ fontWeight: '700', marginTop: 4 }}>数胎动</Body>
+              <Caption>大按钮，一只手按{'\n'}28 周起每天三次</Caption>
+            </Card>
+            <Card style={{ flex: 1, backgroundColor: colors.apricotSoft, borderColor: colors.apricotSoft }} onPress={() => router.push('/packing')}>
+              <Text style={{ fontSize: 26 }}>🧳</Text>
+              <Body style={{ fontWeight: '700', marginTop: 4 }}>待产包</Body>
+              <Caption>{packDone} / {packTotal} 已备好{'\n'}全家一起准备</Caption>
+            </Card>
+          </Row>
+        )}
         <Section title="体重">
           <Card>
             <Row style={{ justifyContent: 'space-between', marginBottom: 8 }}>

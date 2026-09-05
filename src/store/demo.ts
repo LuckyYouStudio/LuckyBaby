@@ -1,5 +1,5 @@
 import type { AppState, Checkup, DailyLog, Member, SupplementLog } from '../data/types';
-import { CHECKUP_TEMPLATES } from '../data/schedule';
+import { CHECKUP_TEMPLATES, defaultBring } from '../data/schedule';
 import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { addDays, dateOfWeek, dueFromLmp, today, uid } from '../lib/pregnancy';
 
@@ -14,7 +14,7 @@ export function demoState(): AppState {
 
   const checkups: Checkup[] = CHECKUP_TEMPLATES.map((t) => {
     const done = t.weekTo < 25;
-    const c: Checkup = { ...t, id: uid(), date: dateOfWeek(dueDate, t.weekFrom), done, metrics: [], visibility: 'partner', fromTemplate: true, hospital: done || t.weekFrom <= 28 ? '市妇幼' : undefined };
+    const c: Checkup = { ...t, id: uid(), date: dateOfWeek(dueDate, t.weekFrom), done, metrics: [], visibility: 'partner', fromTemplate: true, bringItems: defaultBring(t.notes), hospital: done || t.weekFrom <= 28 ? '市妇幼' : undefined };
     if (t.title === 'NT 检查') { c.metrics = [{ key: 'bp_sys', value: 112, unit: 'mmHg' }, { key: 'bp_dia', value: 70, unit: 'mmHg' }, { key: 'weight', value: 54.2, unit: 'kg' }, { key: 'fhr', value: 158, unit: '次/分' }]; c.result = 'NT 1.6 mm，正常'; c.companionId = 'd1'; }
     if (t.title === '大排畸') { c.metrics = [{ key: 'bp_sys', value: 115, unit: 'mmHg' }, { key: 'bp_dia', value: 72, unit: 'mmHg' }, { key: 'weight', value: 58.9, unit: 'kg' }, { key: 'fhr', value: 146, unit: '次/分' }]; c.result = '结构未见明显异常，左手挡脸，下周复查'; c.companionId = 'd1'; }
     if (t.title === '唐筛 / 无创 DNA') { c.result = '无创低风险'; c.metrics = [{ key: 'hb', value: 108, unit: 'g/L' }]; }

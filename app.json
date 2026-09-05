@@ -28,6 +28,13 @@
       [
         "expo-notifications",
         {}
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "用来把产检报告单照片放进对应的那次产检里。",
+          "cameraPermission": "用来直接拍下产检报告单。"
+        }
       ]
     ],
     "scheme": "luckybaby",

@@ -221,3 +221,8 @@ create policy "member updates self" on members for update using (user_id = auth.
 
 -- Realtime：家庭内任一成员改动，其他人实时收到
 alter publication supabase_realtime add table members, checkups, supplements, supplement_logs, daily_logs, activities, comments;
+
+-- ---------------------------------------------------------------------------
+-- 体验优化：产检“带什么”清单（照片暂存本机，不同步）
+-- ---------------------------------------------------------------------------
+alter table checkups add column if not exists bring_items jsonb default '[]';

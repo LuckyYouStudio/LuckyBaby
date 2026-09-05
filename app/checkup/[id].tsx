@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { alert } from '../../src/lib/alert';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Field, Pill, Row, Screen, Section } from '../../src/components/ui';
 import { colors, space } from '../../src/theme';
-import { METRIC_DEFS, metricFlag } from '../../src/data/schedule';
+import { METRIC_DEFS, defaultBring, metricFlag } from '../../src/data/schedule';
 import type { Checkup, Visibility } from '../../src/data/types';
 
 export default function CheckupDetail() {
@@ -17,12 +18,16 @@ export default function CheckupDetail() {
   const [c, setC] = useState<Checkup | undefined>(original);
   const [metrics, setMetrics] = useState<Record<string, string>>(() => Object.fromEntries((original?.metrics ?? []).map((m) => [m.key, String(m.value)])));
   const [itemsText, setItemsText] = useState(original?.items.join('\n') ?? '');
+  const [bring, setBring] = useState(original?.bringItems?.length ? original.bringItems : defaultBring(original?.notes));
+  const [newBring, setNewBring] = useState('');
+  const [viewer, setViewer] = useState<string | null>(null);
   useEffect(() => {
     // 直接通过链接打开时，本地数据可能晚于页面初始化才恢复
     if (!c && original) {
       setC(original);
       setMetrics(Object.fromEntries(original.metrics.map((m) => [m.key, String(m.value)])));
       setItemsText(original.items.join('\n'));
+      setBring(original.bringItems?.length ? original.bringItems : defaultBring(original.notes));
     }
   }, [original]);
   if (!c || !me) return null;
@@ -30,10 +35,28 @@ export default function CheckupDetail() {
 
   const save = (markDone?: boolean) => {
     const ms = METRIC_DEFS.filter((d) => metrics[d.key]?.trim()).map((d) => ({ key: d.key, value: Number(metrics[d.key]), unit: d.unit }));
-    const next: Checkup = { ...c, items: itemsText.split('\n').map((s) => s.trim()).filter(Boolean), metrics: ms, done: markDone ?? c.done };
+    const next: Checkup = { ...c, items: itemsText.split('\n').map((s) => s.trim()).filter(Boolean), metrics: ms, done: markDone ?? c.done, bringItems: bring };
     const activity = markDone && !c.done ? `完成了「${c.title}」${ms.length ? '，记录了 ' + ms.length + ' 项数值' : ''}${next.result ? '：' + next.result : ''}` : undefined;
     dispatch({ type: 'upsertCheckup', checkup: next, activity });
     router.back();
+  };
+
+  const addPhoto = async (fromCamera: boolean) => {
+    const perm = fromCamera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { alert('没有权限', fromCamera ? '需要相机权限来拍报告单。' : '需要相册权限来选照片。'); return; }
+    const res = fromCamera
+      ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsMultipleSelection: true, selectionLimit: 6 });
+    if (res.canceled) return;
+    const uris = res.assets.map((a) => a.uri);
+    const next = { ...c, photos: [...(c.photos ?? []), ...uris] };
+    setC(next);
+    dispatch({ type: 'upsertCheckup', checkup: next }); // 照片立刻保存，不用等点保存
+  };
+  const removePhoto = (uri: string) => {
+    const next = { ...c, photos: (c.photos ?? []).filter((p) => p !== uri) };
+    setC(next);
+    dispatch({ type: 'upsertCheckup', checkup: next });
   };
 
   const vis: { v: Visibility; t: string }[] = [
@@ -81,6 +104,43 @@ export default function CheckupDetail() {
             )}
           </Section>
 
+          {!c.done && (
+            <Section title="带什么">
+              <Card style={{ padding: 0 }}>
+                {bring.map((b, i) => (
+                  <Pressable key={i} disabled={readonly} onPress={() => setBring(bring.map((x, j) => (j === i ? { ...x, done: !x.done } : x)))} style={{ flexDirection: 'row', alignItems: 'center', padding: space.md, paddingHorizontal: space.lg, borderTopWidth: i ? 1 : 0, borderTopColor: colors.line }}>
+                    <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: b.done ? colors.pine : colors.line, backgroundColor: b.done ? colors.pine : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                      {b.done && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>✓</Text>}
+                    </View>
+                    <Body style={{ flex: 1, color: b.done ? colors.ink3 : colors.ink }}>{b.text}</Body>
+                    {!readonly && <Pressable onPress={() => setBring(bring.filter((_, j) => j !== i))} hitSlop={8}><Caption>移除</Caption></Pressable>}
+                  </Pressable>
+                ))}
+                {!readonly && (
+                  <Row style={{ padding: space.md, paddingHorizontal: space.lg, borderTopWidth: bring.length ? 1 : 0, borderTopColor: colors.line }}>
+                    <TextInput value={newBring} onChangeText={setNewBring} placeholder="再加一样…" placeholderTextColor={colors.ink3} style={{ flex: 1, fontSize: 15, color: colors.ink }} returnKeyType="done" onSubmitEditing={() => { if (newBring.trim()) { setBring([...bring, { text: newBring.trim(), done: false }]); setNewBring(''); } }} />
+                  </Row>
+                )}
+              </Card>
+              <Caption style={{ marginTop: 6 }}>开了提醒的话，前一天晚上 8 点会把没勾的念一遍。</Caption>
+            </Section>
+          )}
+
+          <Section title="报告照片" right={!readonly ? <Row style={{ gap: 12 }}><Pressable onPress={() => addPhoto(true)}><Caption style={{ color: colors.pine }}>拍照</Caption></Pressable><Pressable onPress={() => addPhoto(false)}><Caption style={{ color: colors.pine }}>相册</Caption></Pressable></Row> : undefined}>
+            {(c.photos ?? []).length === 0 ? (
+              <Body2>把报告单拍下来放在这里，复诊时医生要看上次的，一翻就有。</Body2>
+            ) : (
+              <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+                {(c.photos ?? []).map((uri) => (
+                  <Pressable key={uri} onPress={() => setViewer(uri)} onLongPress={() => !readonly && alert('删除这张照片？', undefined, [{ text: '取消', style: 'cancel' }, { text: '删除', style: 'destructive', onPress: () => removePhoto(uri) }])}>
+                    <Image source={{ uri }} style={{ width: 96, height: 96, borderRadius: 8, backgroundColor: colors.paper2 }} />
+                  </Pressable>
+                ))}
+              </Row>
+            )}
+            {(c.photos ?? []).length > 0 && <Caption style={{ marginTop: 6 }}>照片只存在本机；长按可删除。</Caption>}
+          </Section>
+
           <Section title="谁陪同">
             <Row style={{ flexWrap: 'wrap', gap: 8 }}>
               {state.members.filter((m) => m.role !== 'mom').map((m) => {
@@ -111,17 +171,17 @@ export default function CheckupDetail() {
                       <Body style={{ fontWeight: '700' }}>{raw ? `${raw} ${d.unit}` : '—'}</Body>
                     ) : (
                       <Row>
-                        <TextInput value={raw} onChangeText={(t) => setMetrics({ ...metrics, [d.key]: t })} keyboardType="decimal-pad" placeholder="—" placeholderTextColor={colors.ink3} style={{ width: 72, textAlign: 'right', fontSize: 17, fontWeight: '700', color: flag === 'ok' ? colors.pine : flag === 'na' ? colors.ink : colors.warn, borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 4 }} />
+                        <TextInput value={raw} onChangeText={(t) => setMetrics({ ...metrics, [d.key]: t })} keyboardType="decimal-pad" placeholder="—" placeholderTextColor={colors.ink3} style={{ width: 72, textAlign: 'right', fontSize: 17, fontWeight: '700', color: flag === 'ok' ? colors.pine : flag === 'na' ? colors.ink : colors.apricot, borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 4 }} />
                         <Caption style={{ width: 44 }}>{d.unit}</Caption>
                       </Row>
                     )}
-                    {flag === 'high' && <Pill text="偏高" tone="warn" />}
-                    {flag === 'low' && <Pill text="偏低" tone="warn" />}
+                    {flag === 'high' && <Pill text="高于参考" tone="apricot" />}
+                    {flag === 'low' && <Pill text="低于参考" tone="apricot" />}
                   </Row>
                 );
               })}
             </Card>
-            <Caption style={{ marginTop: 6 }}>参考范围仅供了解，具体以医生判断为准。</Caption>
+            <Caption style={{ marginTop: 6 }}>参考范围只是常见区间，超出不等于有问题，下次产检问问医生就好。</Caption>
           </Section>}
 
           {!readonly && <Section title="结果与备注">
@@ -155,6 +215,12 @@ export default function CheckupDetail() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <Modal visible={!!viewer} transparent animationType="fade" onRequestClose={() => setViewer(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setViewer(null)}>
+          {viewer && <Image source={{ uri: viewer }} style={{ width: '100%', height: '85%' }} resizeMode="contain" />}
+          <Caption style={{ color: '#fff', marginTop: 8 }}>点任意处关闭</Caption>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }

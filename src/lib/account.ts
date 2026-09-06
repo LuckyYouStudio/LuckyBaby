@@ -54,6 +54,13 @@ export async function deleteAccount(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+/** 离开当前家庭：家人删掉自己的成员行（准妈妈只清本机，云端家庭保留）；然后退出登录，下次建/加家庭用新身份 */
+export async function leaveFamily(memberId: string, role: string): Promise<void> {
+  if (!supabase) return;
+  try { if (role !== 'mom') await supabase.from('members').delete().eq('id', memberId); } catch {}
+  try { await supabase.auth.signOut(); } catch {}
+}
+
 // ---------- 邮箱链接（iOS / 安卓通用；免费版 Supabase 不能发验证码，改为点链接） ----------
 export const AUTH_REDIRECT = 'luckybaby://auth';
 

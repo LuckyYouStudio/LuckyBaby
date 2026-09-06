@@ -419,3 +419,5 @@ end $$;
 grant execute on function create_family(date, date, text, text, uuid, text, text, int, int) to authenticated;
 -- drop old 5-arg overload (M1 leftover)
 drop function if exists create_family(date, date, text, text, uuid);
+-- 家人可以自己退出家庭（删掉自己的成员行）；准妈妈不能删自己
+create policy "member leaves" on members for delete using (user_id = auth.uid() and my_role(family_id) <> 'mom');

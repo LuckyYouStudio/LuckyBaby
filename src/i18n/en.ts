@@ -204,4 +204,7 @@ export const en: Record<string, string> = {
   '今晚是最佳时机 💚': 'Tonight is the best time 💚', '这几天是好时机 💚': 'These are the best days 💚', '排卵日前 2 天到当天最容易受孕。': 'The two days before ovulation through ovulation day are most fertile.',
   '月经预计今天来': 'Period expected today', '她的月经预计今天来': 'Her period is expected today', '来了记一下；没来过几天可以验孕。': 'Log it if it comes; if not, test in a few days.', '问问她，顺便准备点热的。': 'Check in with her, and maybe make something warm.',
   '备孕日历': 'Cycle calendar', '空腹。夫妻双方一起做': 'Fasting. Both partners together', '血常规、血型': 'Blood count, blood type', '肝肾功能、血糖': 'Liver/kidney function, glucose', 'TORCH、甲功': 'TORCH, thyroid', '妇科 B 超': 'Pelvic ultrasound', '男方精液常规': 'Semen analysis',
+  '退出家庭': 'Leave family', '删除本机全部记录并重新开始？云端的家庭会保留，家人不受影响。': 'Delete everything on this phone and start over? The family stays in the cloud; others are not affected.',
+  '退出后本机记录清空，家人那边会看到你已退出。之后可以凭邀请码重新加入。': 'This clears the phone and removes you from the family. You can rejoin later with the invite code.',
+  '退出': 'Leave', '退出家庭并清空本机数据': 'Leave family & clear this phone',
 };

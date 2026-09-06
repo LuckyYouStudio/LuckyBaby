@@ -30,6 +30,7 @@ npm run ios:device      # 装到数据线连着的 iPhone（Release 包，独立
 - `app/`：路由。`(tabs)/` 五个页签：今天 index、产检 checkups、用药 meds、记录 life、家庭 family；`checkup/[id]` 产检详情；`log/new` 记一笔；`member/new` 添加成员；`demo` 示例数据。
 - `src/data/`：类型、产检模板（中国常规节点）、补充剂模板、每周宝宝大小。
 - `src/store/`：全局 reducer + 持久化 + 派生数据（`useDerived` 含孕周与可见性判断）。
+- 日期输入统一用 `src/components/DateField.tsx`（系统滚轮，@react-native-community/datetimepicker，原生模块，改后要 prebuild）。
 - `src/components/ui.tsx`：通用组件；`src/theme.ts`：颜色与字号。`colors` 是可变对象，`applyTheme()` 在根布局按设置/系统切换深浅色，`fontScale` 控制字号；样式必须在渲染时读 `colors.x`，不要在模块顶层缓存。
 - `src/lib/reminders.ts` 本地提醒（产检/补充剂/准爸爸的“她还没记”）；`src/lib/photos.ts` 报告照片上传与签名链接；`src/lib/push.ts` 推送 token 登记。
 - 其他页面：`kicks` 数胎动、`contractions` 宫缩计时、`packing` 待产包、`settings` 外观与字号、`invite` 邀请二维码/分享、`scan` 扫码加入、`join` 深链接 `luckybaby://join?code=`、`cycle` 备孕日历。

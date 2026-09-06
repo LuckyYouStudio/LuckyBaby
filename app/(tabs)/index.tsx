@@ -178,7 +178,7 @@ export default function Today() {
           )}
         </Section>}
 
-        <Section title={tr("家里的动态")} right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
+        <Section title={cyc && state.members.length <= 1 ? tr("我的动态") : tr("家里的动态")} right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           <Feed limit={3} />
         </Section>
 

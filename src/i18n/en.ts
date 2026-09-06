@@ -238,4 +238,6 @@ export const en: Record<string, string> = {
   '月经快来了提醒你': 'Get a heads-up before your period', '预计来的前一天晚上提醒你带好东西，当天再提醒记一下。': 'A reminder the evening before it\'s due, and one on the day to log it.',
   '月经预计明天来': 'Period expected tomorrow', '包里放好卫生巾，早点休息。': 'Pack some pads and rest early.', '来了记一下，预测会更准。': 'Log it when it comes; predictions get better.',
   '历': 'C', '日历': 'Calendar', '本人': 'Me',
+  '开始记录': 'Start tracking', '我的动态': 'My feed',
+  '预计排卵 {o}，排卵期 {a}–{b}': 'Ovulation ~{o}, window {a}–{b}',
 };

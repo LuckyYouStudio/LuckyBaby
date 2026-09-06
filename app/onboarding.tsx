@@ -166,7 +166,7 @@ export default function Onboarding() {
                 </>
               )}
               {stage === 'pregnant' && <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />}
-              {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title={tr("建立家庭")} onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
+              {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title={stage === 'cycle' ? tr('开始记录') : tr("建立家庭")} onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
             </>
           ) : (
             <>

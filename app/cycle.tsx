@@ -95,8 +95,8 @@ export default function Cycle() {
                 let bg = 'transparent', fg = future ? colors.ink3 : colors.ink, border = 'transparent';
                 if (mk.period === 'logged') { bg = colors.warnSoft; fg = colors.warn; }
                 else if (mk.period === 'predicted') { border = colors.warn; fg = colors.warn; }
-                else if (mk.peak) { bg = colors.pine; fg = colors.onPine; }
-                else if (mk.fertile) { bg = colors.pineSoft; fg = colors.pine; }
+                else if (mk.peak && !cyc) { bg = colors.pine; fg = colors.onPine; }
+                else if (mk.fertile || mk.peak) { bg = colors.pineSoft; fg = colors.pine; }
                 return (
                   <Pressable key={d} onPress={() => setSel(d)} style={{ flex: 1, height: 46, alignItems: 'center', justifyContent: 'center' }}>
                     <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: bg, borderWidth: isSel ? 2 : border !== 'transparent' ? 1 : 0, borderColor: isSel ? colors.apricot : border, borderStyle: !isSel && mk.period === 'predicted' ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center' }}>
@@ -114,7 +114,7 @@ export default function Cycle() {
           ))}
         </Card>
         <Row style={{ gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
-          <Legend c={colors.warnSoft} t={tr('月经')} /><Legend c={colors.pineSoft} t={tr('易孕期')} /><Legend c={colors.pine} t={tr('最佳时机')} /><Caption>★ {tr('预计排卵')}</Caption><Caption>💕 {tr('同房')}</Caption>
+          <Legend c={colors.warnSoft} t={tr('月经')} /><Legend c={colors.pineSoft} t={cyc ? tr('排卵期') : tr('易孕期')} />{!cyc && <Legend c={colors.pine} t={tr('最佳时机')} />}<Caption>★ {tr('预计排卵')}</Caption><Caption>💕 {tr('同房')}</Caption>
         </Row>
 
         <Section title={fmtDate(sel) + (sel === today ? ' · ' + tr('今天') : '')}>
@@ -155,7 +155,7 @@ export default function Cycle() {
           <Section title={tr('这个周期')}>
             <Card>
               <Body2>{tr('上次月经 {a} · 周期第 {n} 天', { a: fmtDate(cycle.lastStart), n: cycle.cycleDay })}</Body2>
-              <Body2>{tr('预计排卵 {o}，易孕期 {a}–{b}', { o: fmtDate(cycle.ovulation), a: fmtDate(cycle.fertileStart), b: fmtDate(cycle.fertileEnd) })}{cycle.fromLh ? tr('（按试纸阳性）') : ''}</Body2>
+              <Body2>{cyc ? tr('预计排卵 {o}，排卵期 {a}–{b}', { o: fmtDate(cycle.ovulation), a: fmtDate(cycle.fertileStart), b: fmtDate(cycle.fertileEnd) }) : tr('预计排卵 {o}，易孕期 {a}–{b}', { o: fmtDate(cycle.ovulation), a: fmtDate(cycle.fertileStart), b: fmtDate(cycle.fertileEnd) })}{cycle.fromLh ? tr('（按试纸阳性）') : ''}</Body2>
               <Body2>{tr('下次月经预计 {d}', { d: fmtDate(cycle.nextPeriod) })}{cycle.lateDays ? ' · ' + tr('已推迟 {n} 天', { n: cycle.lateDays }) : ''}</Body2>
               <Caption style={{ marginTop: 6 }}>{cycle.samples ? tr('按最近 {n} 个周期平均 {len} 天估算', { n: cycle.samples, len: cycle.avgLen }) : tr('还没有完整周期，先按设置的 {len} 天估算', { len: cycle.avgLen })}</Caption>
             </Card>

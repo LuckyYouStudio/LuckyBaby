@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDerived, useStore } from '../src/store/store';
+import { SYMPTOMS } from '../src/components/CycleHome';
 import { Body, Body2, Button, Caption, Card, Field, Row, Screen, Section } from '../src/components/ui';
 import { colors, space } from '../src/theme';
 import { addDays, dueFromLmp, fmtDate, parseYmd, toYmd, uid } from '../src/lib/pregnancy';
@@ -27,6 +28,7 @@ export default function Cycle() {
   const logs = state.cycleLogs ?? [];
   const marks = useMemo(() => dayMarks(logs, cycle, state.pregnancy.periodLen ?? DEFAULT_PERIOD), [logs, cycle, state.pregnancy.periodLen]);
   const isMom = me?.role === 'mom';
+  const cyc = (state.pregnancy.stage ?? 'pregnant') === 'cycle';
 
   const becomePregnant = () => {
     if (!me) return;
@@ -52,13 +54,16 @@ export default function Cycle() {
 
   const selLogs = logs.filter((l) => l.date === sel);
   const has = (k: CycleKind) => selLogs.find((l) => l.kind === k);
-  const toggle = (k: CycleKind, value?: number) => {
+  const toggle = (k: CycleKind, value?: number, text?: string) => {
     const ex = has(k);
-    if (ex && value == null) { dispatch({ type: 'deleteCycleLog', id: ex.id }); return; }
+    if (ex && value == null && text == null) { dispatch({ type: 'deleteCycleLog', id: ex.id }); return; }
+    if (ex && (value != null || text != null)) dispatch({ type: 'deleteCycleLog', id: ex.id });
     if (k === 'lh_pos' && has('lh_neg')) dispatch({ type: 'deleteCycleLog', id: has('lh_neg')!.id });
     if (k === 'lh_neg' && has('lh_pos')) dispatch({ type: 'deleteCycleLog', id: has('lh_pos')!.id });
-    dispatch({ type: 'addCycleLog', log: { id: uid(), kind: k, date: sel, value, byId: me.id, at: new Date().toISOString() } });
+    dispatch({ type: 'addCycleLog', log: { id: uid(), kind: k, date: sel, value, text, byId: me.id, at: new Date().toISOString() } });
   };
+  const selSymptoms = (has('symptom')?.text ?? '').split('、').filter(Boolean);
+  const toggleSymptom = (s: string) => { const next = selSymptoms.includes(s) ? selSymptoms.filter((x) => x !== s) : [...selSymptoms, s]; const ex = has('symptom'); if (ex) dispatch({ type: 'deleteCycleLog', id: ex.id }); if (next.length) dispatch({ type: 'addCycleLog', log: { id: uid(), kind: 'symptom', date: sel, text: next.join('、'), byId: me.id, at: new Date().toISOString() } }); };
   const saveCycle = () => {
     const c = parseInt(cycleLen, 10), p = parseInt(periodLen, 10);
     if (!(c >= 15 && c <= 60) || !(p >= 1 && p <= 10)) { alert(tr('数字不对'), tr('周期 15–60 天，经期 1–10 天。')); return; }
@@ -118,9 +123,22 @@ export default function Cycle() {
               {isMom && <Tog k="period_start" t={tr('月经开始')} e="🩸" on={!!has('period_start')} />}
               {isMom && <Tog k="period_end" t={tr('月经结束')} e="⭕" on={!!has('period_end')} />}
               <Tog k="sex" t={tr('同房')} e="💕" on={!!has('sex')} />
-              {isMom && <Tog k="lh_pos" t={tr('试纸阳性')} e="🧪" on={!!has('lh_pos')} />}
-              {isMom && <Tog k="lh_neg" t={tr('试纸阴性')} e="➖" on={!!has('lh_neg')} />}
+              {isMom && !cyc && <Tog k="lh_pos" t={tr('试纸阳性')} e="🧪" on={!!has('lh_pos')} />}
+              {isMom && !cyc && <Tog k="lh_neg" t={tr('试纸阴性')} e="➖" on={!!has('lh_neg')} />}
             </View>
+            {isMom && (
+              <View style={{ marginTop: space.md }}>
+                <Caption style={{ marginBottom: 6 }}>{tr('经量 / 痛经')}</Caption>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {[1, 2, 3].map((v) => { const on = has('flow')?.value === v; return <Pressable key={'f' + v} onPress={() => (on ? toggle('flow') : toggle('flow', v))} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: on ? colors.apricot : colors.line, backgroundColor: on ? colors.apricotSoft : colors.card }}><Text style={{ color: on ? colors.apricot : colors.ink2, fontSize: 13 }}>💧 {[tr('量少'), tr('量中'), tr('量多')][v - 1]}</Text></Pressable>; })}
+                  {[1, 2, 3].map((v) => { const on = has('pain')?.value === v; return <Pressable key={'p' + v} onPress={() => (on ? toggle('pain') : toggle('pain', v))} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: on ? colors.slate : colors.line, backgroundColor: on ? colors.slateSoft : colors.card }}><Text style={{ color: on ? colors.slate : colors.ink2, fontSize: 13 }}>😖 {[tr('微痛'), tr('痛'), tr('很痛')][v - 1]}</Text></Pressable>; })}
+                </View>
+                <Caption style={{ marginTop: 10, marginBottom: 6 }}>{tr('症状')}</Caption>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {SYMPTOMS().map((s) => { const on = selSymptoms.includes(s); return <Pressable key={s} onPress={() => toggleSymptom(s)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: on ? colors.pine : colors.line, backgroundColor: on ? colors.pineSoft : colors.card }}><Text style={{ color: on ? colors.pine : colors.ink2, fontSize: 13 }}>{s}</Text></Pressable>; })}
+                </View>
+              </View>
+            )}
             {isMom && (
               <Row style={{ marginTop: space.md, gap: 8, alignItems: 'flex-end' }}>
                 <View style={{ flex: 1, marginBottom: -space.lg }}>
@@ -170,8 +188,9 @@ export default function Cycle() {
           </Section>
         )}
 
-        {isMom && <Button title={tr('我怀孕了 🎉')} onPress={becomePregnant} style={{ marginTop: space.xl }} />}
-        <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{tr('排卵日按下次月经前 14 天估算，周期不规律时误差较大。只作备孕参考，不能用于避孕；有疑问请咨询医生。')}</Caption>
+        {isMom && cyc && <Button title={tr('开始备孕')} kind="ghost" onPress={() => alert(tr('开始备孕？'), tr('切换后首页会显示易孕期和最佳时机，并加上孕前检查和叶酸提醒。经期记录都保留。'), [{ text: tr('取消') }, { text: tr('开始'), onPress: () => { dispatch({ type: 'startTtc', byId: me.id }); router.replace('/'); } }])} style={{ marginTop: space.xl }} />}
+        {isMom && <Button title={tr('我怀孕了 🎉')} onPress={becomePregnant} style={{ marginTop: cyc ? space.md : space.xl }} />}
+        <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{cyc ? tr('预测按平均周期估算，周期不规律时误差较大。排卵期只作参考，不能用于避孕；有疑问请咨询医生。') : tr('排卵日按下次月经前 14 天估算，周期不规律时误差较大。只作备孕参考，不能用于避孕；有疑问请咨询医生。')}</Caption>
       </ScrollView>
     </Screen>
   );

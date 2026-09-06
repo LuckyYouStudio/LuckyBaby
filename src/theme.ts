@@ -67,6 +67,7 @@ export const roleColor = {
 /** 角色称呼：孕期叫准妈妈/准爸爸，备孕期叫备孕妈妈/备孕爸爸（显示时再 tr()） */
 export function roleLabel(role: 'mom' | 'dad' | 'family', stage?: string) {
   if (stage === 'ttc') return role === 'mom' ? '备孕妈妈' : role === 'dad' ? '备孕爸爸' : '家人';
+  if (stage === 'cycle') return role === 'mom' ? '本人' : role === 'dad' ? '伴侣' : '家人';
   return roleColor[role].label;
 }
 

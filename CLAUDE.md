@@ -33,7 +33,7 @@ npm run ios:device      # 装到数据线连着的 iPhone（Release 包，独立
 - `src/components/ui.tsx`：通用组件；`src/theme.ts`：颜色与字号。`colors` 是可变对象，`applyTheme()` 在根布局按设置/系统切换深浅色，`fontScale` 控制字号；样式必须在渲染时读 `colors.x`，不要在模块顶层缓存。
 - `src/lib/reminders.ts` 本地提醒（产检/补充剂/准爸爸的“她还没记”）；`src/lib/photos.ts` 报告照片上传与签名链接；`src/lib/push.ts` 推送 token 登记。
 - 其他页面：`kicks` 数胎动、`contractions` 宫缩计时、`packing` 待产包、`settings` 外观与字号、`invite` 邀请二维码/分享、`scan` 扫码加入、`join` 深链接 `luckybaby://join?code=`、`cycle` 备孕日历。
-- 备孕：`pregnancy.stage` 为 `ttc` 时首页渲染 `src/components/TtcHome.tsx`；估算逻辑在 `src/lib/cycle.ts`（纯函数）；记录存 `state.cycleLogs`，云端表 `cycle_logs`，只有 mom/dad 可见。「我怀孕了」走 reducer `becomePregnant`。家庭信息（阶段/预产期/周期）随同步下发，比较时用 `canonPregnancy()`。
+- 阶段：`pregnancy.stage` ∈ cycle（只记经期）/ ttc（备孕）/ pregnant（缺省）。cycle 时首页渲染 `src/components/CycleHome.tsx`，产检/用药页签隐藏、多一个「日历」页签（`(tabs)/calendar.tsx` 复用 `app/cycle.tsx`）。ttc 时首页渲染 `src/components/TtcHome.tsx`；估算逻辑在 `src/lib/cycle.ts`（纯函数）；记录存 `state.cycleLogs`，云端表 `cycle_logs`，只有 mom/dad 可见。「我怀孕了」走 reducer `becomePregnant`。家庭信息（阶段/预产期/周期）随同步下发，比较时用 `canonPregnancy()`。
 - 邀请落地页：Edge Function `join`（`src/lib/invite.ts` 里的 INVITE_BASE）；上架后把函数里 APP_STORE_URL 填上并重新部署。
 
 ## 国际化

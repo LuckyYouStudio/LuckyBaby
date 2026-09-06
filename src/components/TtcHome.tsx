@@ -37,7 +37,7 @@ export function advice(v: CycleView) {
 }
 
 /** 周期进度条：经期 / 易孕期 / 最佳 / 今天 */
-function CycleBar({ v }: { v: CycleView }) {
+export function CycleBar({ v }: { v: CycleView }) {
   const len = Math.max(v.avgLen, v.cycleDay);
   const pct = (d: string) => `${Math.min(100, Math.max(0, (diffDays(d, v.lastStart) / len) * 100))}%`;
   const width = (a: string, b: string) => `${Math.max(2, ((diffDays(b, a) + 1) / len) * 100)}%`;
@@ -141,7 +141,7 @@ export function TtcHome() {
   );
 }
 
-function Quick({ e, t, on, fg, bg, onPress }: { e: string; t: string; on: boolean; fg: string; bg: string; onPress: () => void }) {
+export function Quick({ e, t, on, fg, bg, onPress }: { e: string; t: string; on: boolean; fg: string; bg: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, borderColor: on ? fg : colors.line, backgroundColor: on ? bg : colors.card }}>
       <Text style={{ fontSize: 20 }}>{e}</Text>

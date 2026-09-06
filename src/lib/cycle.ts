@@ -30,7 +30,7 @@ export function cycleStats(starts: string[], fallback = DEFAULT_CYCLE) {
   return { avgLen: avg, samples: recent.length, regular: recent.length < 2 || spread <= 7 };
 }
 
-export type Phase = 'period' | 'follicular' | 'fertile' | 'peak' | 'luteal' | 'late';
+export type Phase = 'period' | 'follicular' | 'fertile' | 'peak' | 'luteal' | 'pms' | 'late';
 export type Chance = 'high' | 'medium' | 'low';
 
 export interface CycleView {
@@ -47,6 +47,7 @@ export interface CycleView {
   phase: Phase;
   chance: Chance;
   lateDays: number; // 月经推迟天数（未推迟为 0）
+  daysToNext: number; // 距下次月经天数（推迟时为负）
   fromLh: boolean; // 排卵日是否来自试纸阳性
   samples: number;
   regular: boolean;
@@ -75,9 +76,9 @@ export function cycleView(logs: CycleLog[], cycleLen = DEFAULT_CYCLE, periodLen 
   else if (lateDays > 0) phase = 'late';
   else if (on >= peakStart && on <= peakEnd) phase = 'peak';
   else if (on >= fertileStart && on <= fertileEnd) phase = 'fertile';
-  else if (on > fertileEnd) phase = 'luteal';
+  else if (on > fertileEnd) phase = diffDays(nextPeriod, on) <= 5 ? 'pms' : 'luteal';
   const chance: Chance = phase === 'peak' ? 'high' : phase === 'fertile' ? 'medium' : 'low';
-  return { lastStart, cycleDay, avgLen, periodLen, nextPeriod, ovulation, fertileStart, fertileEnd, peakStart, peakEnd, phase, chance, lateDays, fromLh, samples, regular };
+  return { lastStart, cycleDay, avgLen, periodLen, nextPeriod, ovulation, fertileStart, fertileEnd, peakStart, peakEnd, phase, chance, lateDays, daysToNext: diffDays(nextPeriod, on), fromLh, samples, regular };
 }
 
 export type DayMark = { period?: 'logged' | 'predicted'; fertile?: boolean; peak?: boolean; ovulation?: boolean; sex?: boolean; lh?: 'pos' | 'neg'; bbt?: number };

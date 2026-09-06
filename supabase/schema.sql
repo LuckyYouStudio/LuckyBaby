@@ -421,3 +421,8 @@ grant execute on function create_family(date, date, text, text, uuid, text, text
 drop function if exists create_family(date, date, text, text, uuid);
 -- 家人可以自己退出家庭（删掉自己的成员行）；准妈妈不能删自己
 create policy "member leaves" on members for delete using (user_id = auth.uid() and my_role(family_id) <> 'mom');
+-- 经期记录模式（2026-09-06）：families.stage 允许 cycle；cycle_logs 加经量/痛经/症状
+alter table families drop constraint if exists families_stage_check;
+alter table families add constraint families_stage_check check (stage in ('cycle','ttc','pregnant'));
+alter table cycle_logs drop constraint if exists cycle_logs_kind_check;
+alter table cycle_logs add constraint cycle_logs_kind_check check (kind in ('period_start','period_end','sex','lh_pos','lh_neg','bbt','note','flow','pain','symptom'));

@@ -60,6 +60,15 @@ export async function rescheduleReminders(state: AppState) {
     const week = state.pregnancy.dueDate ? gestation(state.pregnancy.dueDate).week : 0;
 
     // 备孕：易孕期开始（9:00）、最佳时机第一天（20:00）、月经该来那天（9:00）；小两口都提醒
+    if (state.pregnancy.stage === 'cycle' && me?.role === 'mom') {
+      const v = cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t);
+      if (v) {
+        const eve = parseYmd(v.nextPeriod); eve.setDate(eve.getDate() - 1); eve.setHours(20, 0, 0, 0);
+        const day = parseYmd(v.nextPeriod); day.setHours(9, 0, 0, 0);
+        if (eve > now) await Notifications.scheduleNotificationAsync({ content: { title: tr('月经预计明天来'), body: tr('包里放好卫生巾，早点休息。'), data: { cycle: true } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: eve } });
+        if (day > now) await Notifications.scheduleNotificationAsync({ content: { title: tr('月经预计今天来'), body: tr('来了记一下，预测会更准。'), data: { cycle: true } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: day } });
+      }
+    }
     if (state.pregnancy.stage === 'ttc' && me && me.role !== 'family') {
       const v = cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t);
       if (v) {

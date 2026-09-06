@@ -46,7 +46,7 @@ export default function Onboarding() {
 
   // 建立家庭
   const [name, setName] = useState('');
-  const [stage, setStage] = useState<'pregnant' | 'ttc'>('pregnant');
+  const [stage, setStage] = useState<'pregnant' | 'ttc' | 'cycle'>('pregnant');
   const [mode, setMode] = useState<'lmp' | 'due'>('lmp');
   const [date, setDate] = useState(addDays(today(), -70));
   const [lastPeriod, setLastPeriod] = useState(addDays(today(), -14));
@@ -72,8 +72,8 @@ export default function Onboarding() {
 
   const create = async () => {
     if (!validCreate) return;
-    const pregnancy = stage === 'ttc'
-      ? { stage: 'ttc' as const, dueDate: '', lmp: lastPeriod, momName: name.trim(), babyNickname: nick.trim() || undefined, cycleLen: +cycleLen, periodLen: +periodLen }
+    const pregnancy = stage !== 'pregnant'
+      ? { stage, dueDate: '', lmp: lastPeriod, momName: name.trim(), babyNickname: nick.trim() || undefined, cycleLen: +cycleLen, periodLen: +periodLen }
       : { stage: 'pregnant' as const, dueDate, lmp: mode === 'lmp' ? date : undefined, momName: name.trim(), babyNickname: nick.trim() || undefined };
     const me = { id: uid(), name: name.trim(), role: 'mom' as const, joinedAt: new Date().toISOString() };
     if (!cloudEnabled) { dispatch({ type: 'setup', pregnancy, me }); return; }
@@ -138,16 +138,16 @@ export default function Onboarding() {
             <Caption style={{ flex: 1, marginRight: 8 }} numberOfLines={1}>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
             <LangToggle compact />
           </Row>
-          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? (stage === 'ttc' ? tr('你好，备孕妈妈') : tr('你好，准妈妈')) : tr('加入她的家庭')}</H1>
+          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? (stage === 'ttc' ? tr('你好，备孕妈妈') : stage === 'cycle' ? tr('你好') : tr('你好，准妈妈')) : tr('加入她的家庭')}</H1>
 
-          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我来建家庭'), d: tr('准妈妈 / 备孕妈妈') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
+          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我自己用'), d: tr('怀孕 / 备孕 / 记经期') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
 
           {flow === 'create' ? (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>{tr('先由你建立这个家庭。之后用邀请码把他和家人加进来，他们能看到什么由你决定。')}</Body2>
+              <Body2 style={{ marginBottom: space.xl }}>{stage === 'cycle' ? tr('自己一个人用就行，不需要邀请任何人。以后想让伴侣知道你哪几天不舒服，再发邀请码给他。') : tr('先由你建立这个家庭。之后用邀请码把他和家人加进来，他们能看到什么由你决定。')}</Body2>
               <Field label={tr("你的称呼")} value={name} onChange={setName} placeholder={tr("例如：小雨")} />
               <Caption style={{ marginBottom: 6 }}>{tr('现在是')}</Caption>
-              <Choice value={stage} onChange={setStage} options={[{ v: 'pregnant', t: tr('已怀孕'), d: tr('记产检、用药、孕周') }, { v: 'ttc', t: tr('备孕中'), d: tr('算排卵期、记月经') }]} />
+              <Choice value={stage} onChange={setStage} options={[{ v: 'pregnant', t: tr('已怀孕'), d: tr('产检、用药') }, { v: 'ttc', t: tr('备孕中'), d: tr('排卵期') }, { v: 'cycle', t: tr('只记经期'), d: tr('一个人也能用') }]} />
               {stage === 'pregnant' ? (
                 <>
                   <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
@@ -162,7 +162,7 @@ export default function Onboarding() {
                     <View style={{ flex: 1 }}><Field label={tr('平均周期（天）')} value={cycleLen} onChange={setCycleLen} keyboardType="numeric" /></View>
                     <View style={{ flex: 1 }}><Field label={tr('经期（天）')} value={periodLen} onChange={setPeriodLen} keyboardType="numeric" /></View>
                   </Row>
-                  <Caption style={{ marginTop: -8, marginBottom: space.lg }}>{tr('不确定就先填 28 和 5，记两个周期后会自动按你的实际周期算。怀上以后一键切换到孕期模式。')}</Caption>
+                  <Caption style={{ marginTop: -8, marginBottom: space.lg }}>{stage === 'cycle' ? tr('不确定就先填 28 和 5，记两个周期后会自动按你的实际周期算。以后想备孕或怀上了，一键切换，记录都还在。') : tr('不确定就先填 28 和 5，记两个周期后会自动按你的实际周期算。怀上以后一键切换到孕期模式。')}</Caption>
                 </>
               )}
               {stage === 'pregnant' && <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />}

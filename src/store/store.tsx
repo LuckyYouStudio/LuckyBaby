@@ -63,7 +63,8 @@ type Action =
   | { type: 'deleteCycleLog'; id: string }
   | { type: 'setCycle'; cycleLen?: number; periodLen?: number }
   | { type: 'becomePregnant'; dueDate: string; lmp?: string; byId: string }
-  | { type: 'updatePregnancy'; dueDate: string; lmp?: string; babyNickname?: string; byId: string };
+  | { type: 'updatePregnancy'; dueDate: string; lmp?: string; babyNickname?: string; byId: string }
+  | { type: 'startTtc'; byId: string };
 
 /** 把日期编进 supplementId 的末 12 位，得到一个确定的合法 UUID */
 function logIdFor(supplementId: string, date: string) {
@@ -107,11 +108,12 @@ function reducer(s: AppState, a: Action): AppState {
     case 'seedDemo':
       return demoState();
     case 'setup': {
-      const ttc = a.pregnancy.stage === 'ttc';
-      const seeded = ttc ? seedTtc() : seedFromTemplates(a.pregnancy.dueDate);
+      const stage = a.pregnancy.stage ?? 'pregnant';
+      const ttc = stage === 'ttc';
+      const seeded = stage === 'pregnant' ? seedFromTemplates(a.pregnancy.dueDate) : ttc ? seedTtc() : { checkups: [], supplements: [] };
       const code = a.familyCode ?? Math.random().toString(36).slice(2, 8).toUpperCase();
-      const first = act(a.me.id, 'system', ttc ? `${a.me.name} 创建了家庭，开始备孕` : `${a.me.name} 创建了家庭，预产期 ${a.pregnancy.dueDate}`);
-      const cycleLogs: CycleLog[] = ttc && a.pregnancy.lmp ? [{ id: uid(), kind: 'period_start', date: a.pregnancy.lmp, byId: a.me.id, at: new Date().toISOString() }] : [];
+      const first = act(a.me.id, 'system', stage === 'cycle' ? `${a.me.name} 开始记录经期` : ttc ? `${a.me.name} 创建了家庭，开始备孕` : `${a.me.name} 创建了家庭，预产期 ${a.pregnancy.dueDate}`);
+      const cycleLogs: CycleLog[] = stage !== 'pregnant' && a.pregnancy.lmp ? [{ id: uid(), kind: 'period_start', date: a.pregnancy.lmp, byId: a.me.id, at: new Date().toISOString() }] : [];
       return { ...emptyState, consentAt: s.consentAt, settings: s.settings, onboarded: true, meId: a.me.id, familyCode: code, pregnancy: a.pregnancy, members: [a.me], ...seeded, activities: [first], cycleLogs, cloud: a.cloud ?? null };
     }
     case 'joinFamily':
@@ -196,7 +198,7 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, packing: [...packing, { id: uid(), group: a.group, text: a.text, done: false }] };
     }
     case 'addCycleLog': {
-      const logs = (s.cycleLogs ?? []).filter((l) => !(l.date === a.log.date && l.kind === a.log.kind && ['period_start', 'period_end', 'lh_pos', 'lh_neg', 'bbt'].includes(l.kind)));
+      const logs = (s.cycleLogs ?? []).filter((l) => !(l.date === a.log.date && l.kind === a.log.kind && ['period_start', 'period_end', 'lh_pos', 'lh_neg', 'bbt', 'flow', 'pain', 'symptom'].includes(l.kind)));
       const activities = a.activity ? [act(a.log.byId, 'log', a.activity, 'partner', a.log.id), ...s.activities] : s.activities;
       return { ...s, cycleLogs: [...logs, a.log], activities };
     }
@@ -208,6 +210,13 @@ function reducer(s: AppState, a: Action): AppState {
       const checkups = changed ? s.checkups.map((c) => (c.fromTemplate && !c.done ? { ...c, date: dateOfWeek(a.dueDate, c.weekFrom) } : c)) : s.checkups;
       const activities = changed ? [act(a.byId, 'system', `预产期改为 ${a.dueDate}`), ...s.activities] : s.activities;
       return { ...s, pregnancy: { ...s.pregnancy, dueDate: a.dueDate, lmp: a.lmp, babyNickname: a.babyNickname }, checkups, activities };
+    }
+    case 'startTtc': {
+      // 只记经期 → 备孕：补上孕前检查和叶酸/维生素 D
+      const seeded = seedTtc();
+      const keep = new Set(s.supplements.map((x) => x.name));
+      const by = s.members.find((m) => m.id === a.byId);
+      return { ...s, pregnancy: { ...s.pregnancy, stage: 'ttc' }, checkups: [...s.checkups, ...seeded.checkups], supplements: [...s.supplements, ...seeded.supplements.filter((x) => !keep.has(x.name))], activities: [act(a.byId, 'system', `${by?.name ?? s.pregnancy.momName} 开始备孕`), ...s.activities] };
     }
     case 'setCycle':
       return { ...s, pregnancy: { ...s.pregnancy, ...(a.cycleLen ? { cycleLen: a.cycleLen } : {}), ...(a.periodLen ? { periodLen: a.periodLen } : {}) } };
@@ -389,6 +398,6 @@ export function useDerived() {
   };
   const byId = (id: string) => state.members.find((m) => m.id === id);
   const stage = state.pregnancy.stage ?? 'pregnant';
-  const cycle = stage === 'ttc' ? cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t) : null;
+  const cycle = stage !== 'pregnant' ? cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t) : null;
   return { me, g, today: t, canSee, byId, stage, cycle };
 }

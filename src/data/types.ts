@@ -9,8 +9,8 @@ export interface Member {
   joinedAt: string;
 }
 
-/** 家庭所处阶段：备孕中 / 已怀孕。缺省视为已怀孕（老数据） */
-export type Stage = 'ttc' | 'pregnant';
+/** 家庭所处阶段：只记经期 / 备孕中 / 已怀孕。缺省视为已怀孕（老数据） */
+export type Stage = 'cycle' | 'ttc' | 'pregnant';
 
 export interface Pregnancy {
   stage?: Stage;
@@ -23,14 +23,14 @@ export interface Pregnancy {
 }
 
 /** 备孕记录：月经、同房、排卵试纸、基础体温。只有准妈妈和准爸爸可见 */
-export type CycleKind = 'period_start' | 'period_end' | 'sex' | 'lh_pos' | 'lh_neg' | 'bbt' | 'note';
+export type CycleKind = 'period_start' | 'period_end' | 'sex' | 'lh_pos' | 'lh_neg' | 'bbt' | 'note' | 'flow' | 'pain' | 'symptom';
 
 export interface CycleLog {
   id: string;
   kind: CycleKind;
   date: string; // YYYY-MM-DD
-  value?: number; // 基础体温 ℃
-  text?: string;
+  value?: number; // 基础体温 ℃；经量 1 少 2 中 3 多；痛经 1 轻 2 中 3 重
+  text?: string; // 症状标签（用 、 分隔）
   byId: string;
   at: string;
 }

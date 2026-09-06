@@ -9,11 +9,30 @@ export interface Member {
   joinedAt: string;
 }
 
+/** 家庭所处阶段：只记经期 / 备孕中 / 已怀孕。缺省视为已怀孕（老数据） */
+export type Stage = 'cycle' | 'ttc' | 'pregnant';
+
 export interface Pregnancy {
-  lmp?: string; // 末次月经 YYYY-MM-DD
-  dueDate: string; // 预产期 YYYY-MM-DD
+  stage?: Stage;
+  lmp?: string; // 末次月经 YYYY-MM-DD（备孕期为上次月经第一天）
+  dueDate: string; // 预产期 YYYY-MM-DD；备孕期为空串
   momName: string;
   babyNickname?: string;
+  cycleLen?: number; // 备孕：平均周期天数，默认 28
+  periodLen?: number; // 备孕：经期天数，默认 5
+}
+
+/** 备孕记录：月经、同房、排卵试纸、基础体温。只有准妈妈和准爸爸可见 */
+export type CycleKind = 'period_start' | 'period_end' | 'sex' | 'lh_pos' | 'lh_neg' | 'bbt' | 'note' | 'flow' | 'pain' | 'symptom';
+
+export interface CycleLog {
+  id: string;
+  kind: CycleKind;
+  date: string; // YYYY-MM-DD
+  value?: number; // 基础体温 ℃；经量 1 少 2 中 3 多；痛经 1 轻 2 中 3 重
+  text?: string; // 症状标签（用 、 分隔）
+  byId: string;
+  at: string;
 }
 
 export interface CheckupMetric {
@@ -105,6 +124,8 @@ export interface AppState {
   supplementLogs: SupplementLog[];
   logs: DailyLog[];
   activities: Activity[];
+  /** 备孕记录（老数据可能没有这个字段） */
+  cycleLogs?: CycleLog[];
   /** 云同步信息；null 为纯本地 */
   cloud: { familyId: string; userId: string; bound?: boolean } | null;
   /** 本地提醒是否已开启（产检前一天、补充剂） */

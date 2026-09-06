@@ -58,6 +58,14 @@ export function fmtDate(s?: string): string {
   return getLang() === 'en' ? `${EN_MONTHS[d.getMonth()]} ${d.getDate()}` : `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
+/** 完整日期：2026年8月22日 周六 / Sat, Aug 22, 2026 */
+export function fmtFullDate(s: string): string {
+  const d = parseYmd(s);
+  const en = getLang() === 'en';
+  const wd = en ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] : ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
+  return en ? `${wd}, ${EN_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` : `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${wd}`;
+}
+
 export function fmtRelative(s: string): string {
   const diff = Math.round((parseYmd(s).getTime() - parseYmd(today()).getTime()) / DAY);
   const en = getLang() === 'en';

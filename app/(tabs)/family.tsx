@@ -7,12 +7,12 @@ import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Pill, Row, Screen, Section } from '../../src/components/ui';
 import { Feed } from '../../src/components/Feed';
 import { LangToggle } from '../../src/components/LangToggle';
-import { bindApple, bindEmailStart, deleteAccount } from '../../src/lib/account';
+import { bindApple, bindEmailStart, deleteAccount, leaveFamily } from '../../src/lib/account';
 import { EmailOtp } from '../../src/components/EmailOtp';
 import { Platform } from 'react-native';
 import { openPrivacy, openTerms } from '../../src/lib/legal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, roleColor, space } from '../../src/theme';
+import { colors, roleColor, roleLabel, space } from '../../src/theme';
 import { tr } from '../../src/i18n';
 
 export default function Family() {
@@ -96,7 +96,7 @@ export default function Family() {
                     <View>
                       <Row>
                         <Body style={{ fontWeight: '700' }}>{m.name}</Body>
-                        <Pill text={tr(m.relation ?? roleColor[m.role].label)} tone={m.role === 'mom' ? 'pine' : m.role === 'dad' ? 'apricot' : 'slate'} />
+                        <Pill text={tr(m.relation ?? roleLabel(m.role, state.pregnancy.stage))} tone={m.role === 'mom' ? 'pine' : m.role === 'dad' ? 'apricot' : 'slate'} />
                         {isMe && <Caption>{tr('（我）')}</Caption>}
                       </Row>
                       <Caption>
@@ -174,6 +174,17 @@ export default function Family() {
             )}
           </Card>
         )}
+        {me.role !== 'family' && (state.pregnancy.stage ?? 'pregnant') === 'pregnant' && (
+          <Card style={{ marginTop: space.md }} onPress={() => router.push('/pregnancy' as never)}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Body style={{ fontWeight: '700' }}>{tr('孕期信息')}</Body>
+                <Caption>{tr('预产期 {d} · 改预产期、末次月经、宝宝小名', { d: state.pregnancy.dueDate })}</Caption>
+              </View>
+              <Caption style={{ color: colors.pine }}>{tr('修改')}</Caption>
+            </Row>
+          </Card>
+        )}
         <Card style={{ marginTop: space.md }}>
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={{ flex: 1, marginRight: 8 }}>
@@ -196,11 +207,13 @@ export default function Family() {
           <Pressable onPress={openPrivacy}><Caption style={{ color: colors.pine }}>{tr('隐私政策')}</Caption></Pressable>
           <Pressable onPress={openTerms}><Caption style={{ color: colors.pine }}>{tr('用户协议')}</Caption></Pressable>
         </Row>
-        {me.role === 'mom' && (
-          <Pressable style={{ marginTop: space.lg, alignItems: 'center' }} onPress={() => alert(tr('清空数据'), tr('删除本机全部记录并重新开始？'), [{ text: tr('取消') }, { text: tr('清空'), style: 'destructive', onPress: () => dispatch({ type: 'reset' }) }])}>
-            <Caption style={{ color: colors.warn }}>{tr('清空本机数据')}</Caption>
-          </Pressable>
-        )}
+        <Pressable style={{ marginTop: space.lg, alignItems: 'center' }} onPress={() => alert(
+          me.role === 'mom' ? tr('清空数据') : tr('退出家庭'),
+          me.role === 'mom' ? tr('删除本机全部记录并重新开始？云端的家庭会保留，家人不受影响。') : tr('退出后本机记录清空，家人那边会看到你已退出。之后可以凭邀请码重新加入。'),
+          [{ text: tr('取消') }, { text: me.role === 'mom' ? tr('清空') : tr('退出'), style: 'destructive', onPress: async () => { await leaveFamily(me.id, me.role); dispatch({ type: 'reset' }); } }],
+        )}>
+          <Caption style={{ color: colors.warn }}>{me.role === 'mom' ? tr('清空本机数据') : tr('退出家庭并清空本机数据')}</Caption>
+        </Pressable>
       </ScrollView>
     </Screen>
   );

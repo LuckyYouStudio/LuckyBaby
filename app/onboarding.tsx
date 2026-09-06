@@ -8,6 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../src/store/store';
 import { Body, Body2, Button, Caption, Field, H1, Row, Screen } from '../src/components/ui';
+import { DateField } from '../src/components/DateField';
 import { colors, roleColor, space } from '../src/theme';
 import { addDays, dueFromLmp, today, uid } from '../src/lib/pregnancy';
 import { cloudEnabled, ensureSession } from '../src/lib/supabase';
@@ -46,10 +47,15 @@ export default function Onboarding() {
 
   // 建立家庭
   const [name, setName] = useState('');
+  const [stage, setStage] = useState<'pregnant' | 'ttc' | 'cycle'>('pregnant');
   const [mode, setMode] = useState<'lmp' | 'due'>('lmp');
   const [date, setDate] = useState(addDays(today(), -70));
+  const [lastPeriod, setLastPeriod] = useState(addDays(today(), -14));
+  const [cycleLen, setCycleLen] = useState('28');
+  const [periodLen, setPeriodLen] = useState('5');
   const [nick, setNick] = useState('');
-  const validCreate = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const ymd = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const validCreate = name.trim().length > 0 && (stage === 'pregnant' ? ymd(date) : ymd(lastPeriod) && +cycleLen >= 15 && +cycleLen <= 60 && +periodLen >= 1 && +periodLen <= 10);
   const dueDate = mode === 'lmp' ? dueFromLmp(date) : date;
 
   // 加入家庭
@@ -67,7 +73,9 @@ export default function Onboarding() {
 
   const create = async () => {
     if (!validCreate) return;
-    const pregnancy = { dueDate, lmp: mode === 'lmp' ? date : undefined, momName: name.trim(), babyNickname: nick.trim() || undefined };
+    const pregnancy = stage !== 'pregnant'
+      ? { stage, dueDate: '', lmp: lastPeriod, momName: name.trim(), babyNickname: nick.trim() || undefined, cycleLen: +cycleLen, periodLen: +periodLen }
+      : { stage: 'pregnant' as const, dueDate, lmp: mode === 'lmp' ? date : undefined, momName: name.trim(), babyNickname: nick.trim() || undefined };
     const me = { id: uid(), name: name.trim(), role: 'mom' as const, joinedAt: new Date().toISOString() };
     if (!cloudEnabled) { dispatch({ type: 'setup', pregnancy, me }); return; }
     setBusy(true);
@@ -131,24 +139,39 @@ export default function Onboarding() {
             <Caption style={{ flex: 1, marginRight: 8 }} numberOfLines={1}>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
             <LangToggle compact />
           </Row>
-          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? tr('你好，准妈妈') : tr('加入她的孕期')}</H1>
+          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? (stage === 'ttc' ? tr('你好，备孕妈妈') : stage === 'cycle' ? tr('你好') : tr('你好，准妈妈')) : tr('加入她的家庭')}</H1>
 
-          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我是准妈妈'), d: tr('建立家庭') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
+          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我自己用'), d: tr('怀孕 / 备孕 / 记经期') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
 
           {flow === 'create' ? (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>{tr('先由你建立这个家庭。之后用邀请码把准爸爸和家人加进来，他们能看到什么由你决定。')}</Body2>
+              <Body2 style={{ marginBottom: space.xl }}>{stage === 'cycle' ? tr('自己一个人用就行，不需要邀请任何人。以后想让伴侣知道你哪几天不舒服，再发邀请码给他。') : tr('先由你建立这个家庭。之后用邀请码把他和家人加进来，他们能看到什么由你决定。')}</Body2>
               <Field label={tr("你的称呼")} value={name} onChange={setName} placeholder={tr("例如：小雨")} />
-              <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
-              <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: tr('末次月经') }, { v: 'due', t: tr('医生给的预产期') }]} />
-              <Field label={mode === 'lmp' ? tr('末次月经第一天（YYYY-MM-DD）') : tr('预产期（YYYY-MM-DD）')} value={date} onChange={setDate} placeholder="2026-06-26" keyboardType="numeric" />
-              {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>{tr('预产期')} {dueDate}</Body>}
-              <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />
-              {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title={tr("建立家庭")} onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
+              <Caption style={{ marginBottom: 6 }}>{tr('现在是')}</Caption>
+              <Choice value={stage} onChange={setStage} options={[{ v: 'pregnant', t: tr('已怀孕'), d: tr('产检、用药') }, { v: 'ttc', t: tr('备孕中'), d: tr('排卵期') }, { v: 'cycle', t: tr('只记经期'), d: tr('一个人也能用') }]} />
+              {stage === 'pregnant' ? (
+                <>
+                  <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
+                  <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: tr('末次月经') }, { v: 'due', t: tr('医生给的预产期') }]} />
+                  <DateField label={mode === 'lmp' ? tr('末次月经第一天') : tr('预产期')} value={date} onChange={setDate} min={mode === 'lmp' ? addDays(today(), -300) : today()} max={mode === 'lmp' ? today() : addDays(today(), 300)} />
+                  {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>{tr('预产期')} {dueDate}</Body>}
+                </>
+              ) : (
+                <>
+                  <DateField label={tr('上次月经第一天')} value={lastPeriod} onChange={setLastPeriod} min={addDays(today(), -120)} max={today()} />
+                  <Row style={{ gap: 12 }}>
+                    <View style={{ flex: 1 }}><Field label={tr('平均周期（天）')} value={cycleLen} onChange={setCycleLen} keyboardType="numeric" /></View>
+                    <View style={{ flex: 1 }}><Field label={tr('经期（天）')} value={periodLen} onChange={setPeriodLen} keyboardType="numeric" /></View>
+                  </Row>
+                  <Caption style={{ marginTop: -8, marginBottom: space.lg }}>{stage === 'cycle' ? tr('不确定就先填 28 和 5，记两个周期后会自动按你的实际周期算。以后想备孕或怀上了，一键切换，记录都还在。') : tr('不确定就先填 28 和 5，记两个周期后会自动按你的实际周期算。怀上以后一键切换到孕期模式。')}</Caption>
+                </>
+              )}
+              {stage === 'pregnant' && <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />}
+              {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title={stage === 'cycle' ? tr('开始记录') : tr("建立家庭")} onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
             </>
           ) : (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>{tr('让准妈妈把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。')}</Body2>
+              <Body2 style={{ marginBottom: space.xl }}>{tr('让她把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。')}</Body2>
               <Field label={tr("邀请码")} value={code} onChange={(t) => setCode(t.toUpperCase())} placeholder={tr("例如：TY7K2Q")} />
               <Row style={{ gap: 8, marginTop: -8, marginBottom: space.lg }}>
                 <Button title={tr("粘贴邀请码")} small kind="ghost" onPress={paste} />
@@ -157,10 +180,10 @@ export default function Onboarding() {
               <Field label={tr("你的称呼")} value={jname} onChange={setJname} placeholder={role === 'dad' ? tr('例如：阿强') : tr('例如：外婆')} />
               <Caption style={{ marginBottom: 6 }}>{tr('你是')}</Caption>
               <Choice value={role} onChange={(r) => { setRole(r); setRelation(r === 'dad' ? tr('老公') : ''); }} options={[
-                { v: 'dad', t: tr('准爸爸'), d: tr('能记录、打卡、陪产检'), fg: roleColor.dad.fg, bg: roleColor.dad.bg },
+                { v: 'dad', t: tr('老公'), d: tr('准爸爸 / 备孕爸爸'), fg: roleColor.dad.fg, bg: roleColor.dad.bg },
                 { v: 'family', t: tr('家人'), d: tr('看动态和产检日程'), fg: roleColor.family.fg, bg: roleColor.family.bg },
               ]} />
-              <Caption style={{ marginBottom: 6 }}>{tr('和准妈妈的关系')}</Caption>
+              <Caption style={{ marginBottom: 6 }}>{tr('和她的关系')}</Caption>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: space.xl }}>
                 {RELATIONS().map((t) => (
                   <Pressable key={t} onPress={() => setRelation(t)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: relation === t ? colors.pineSoft : colors.paper2 }}>

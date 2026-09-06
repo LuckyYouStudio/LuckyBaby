@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } fro
 import { useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Body2, Button, Caption, Field, Row, Screen } from '../../src/components/ui';
+import { DateField } from '../../src/components/DateField';
 import { colors, space } from '../../src/theme';
 import type { LogKind, Visibility } from '../../src/data/types';
 import { uid } from '../../src/lib/pregnancy';
@@ -65,7 +66,7 @@ export default function NewLog() {
           )}
           {kind !== 'weight' && kind !== 'kick' && <Field label={kind === 'note' ? tr('内容') : tr('补充说明')} value={text} onChange={setText} multiline placeholder="…" />}
           {(kind === 'weight' || kind === 'kick') && <Field label={tr("备注（可选）")} value={text} onChange={setText} placeholder="…" />}
-          <Field label={tr("日期")} value={date} onChange={setDate} keyboardType="numeric" />
+          <DateField label={tr("日期")} value={date} onChange={setDate} max={today} />
 
           {me.role === 'mom' && (
             <>

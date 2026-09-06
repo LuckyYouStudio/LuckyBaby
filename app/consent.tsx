@@ -20,7 +20,7 @@ export default function Consent() {
           <LangToggle compact />
         </Row>
         <H1 style={{ marginBottom: 12 }}>{tr('开始之前')}</H1>
-        <Body2 style={{ marginBottom: space.lg }}>{tr('这个 App 会保存你记录的孕期健康信息（产检结果、体重、症状、用药等）。这类信息属于敏感个人信息，需要你单独同意我们才会处理。')}</Body2>
+        <Body2 style={{ marginBottom: space.lg }}>{tr('这个 App 会保存你记录的备孕与孕期健康信息（月经周期、产检结果、体重、症状、用药等）。这类信息属于敏感个人信息，需要你单独同意我们才会处理。')}</Body2>
         <Card>
           <Body style={{ fontWeight: '700' }}>{tr('我们承诺')}</Body>
           <Body2 style={{ marginTop: 6 }}>{tr('· 数据只在你的家庭内可见，可见范围由准妈妈决定')}</Body2>

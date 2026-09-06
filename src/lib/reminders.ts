@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { AppState } from '../data/types';
 import { gestation, parseYmd, today } from './pregnancy';
+import { cycleView } from './cycle';
 import { needsFasting } from '../data/schedule';
 import { tr } from '../i18n';
 
@@ -57,6 +58,33 @@ export async function rescheduleReminders(state: AppState) {
 
     const me = state.members.find((m) => m.id === state.meId);
     const week = state.pregnancy.dueDate ? gestation(state.pregnancy.dueDate).week : 0;
+
+    // 备孕：易孕期开始（9:00）、最佳时机第一天（20:00）、月经该来那天（9:00）；小两口都提醒
+    if (state.pregnancy.stage === 'cycle' && me?.role === 'mom') {
+      const v = cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t);
+      if (v) {
+        const eve = parseYmd(v.nextPeriod); eve.setDate(eve.getDate() - 1); eve.setHours(20, 0, 0, 0);
+        const day = parseYmd(v.nextPeriod); day.setHours(9, 0, 0, 0);
+        if (eve > now) await Notifications.scheduleNotificationAsync({ content: { title: tr('月经预计明天来'), body: tr('包里放好卫生巾，早点休息。'), data: { cycle: true } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: eve } });
+        if (day > now) await Notifications.scheduleNotificationAsync({ content: { title: tr('月经预计今天来'), body: tr('来了记一下，预测会更准。'), data: { cycle: true } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: day } });
+      }
+    }
+    if (state.pregnancy.stage === 'ttc' && me && me.role !== 'family') {
+      const v = cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t);
+      if (v) {
+        const at = (ymd: string, h: number) => { const d = parseYmd(ymd); d.setHours(h, 0, 0, 0); return d; };
+        const her = me.role === 'mom';
+        const plan: { when: Date; title: string; body: string }[] = [
+          { when: at(v.fertileStart, 9), title: her ? tr('易孕期开始了') : tr('她的易孕期开始了'), body: tr('接下来一周隔天同房一次就好。预计排卵 {d}。', { d: v.ovulation.slice(5).replace('-', '/') }) },
+          { when: at(v.peakStart, 20), title: her ? tr('今晚是最佳时机 💚') : tr('这几天是好时机 💚'), body: tr('排卵日前 2 天到当天最容易受孕。') },
+          { when: at(v.nextPeriod, 9), title: her ? tr('月经预计今天来') : tr('她的月经预计今天来'), body: her ? tr('来了记一下；没来过几天可以验孕。') : tr('问问她，顺便准备点热的。') },
+        ];
+        for (const p of plan) {
+          if (p.when <= now) continue;
+          await Notifications.scheduleNotificationAsync({ content: { title: p.title, body: p.body, data: { ttc: true } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: p.when } });
+        }
+      }
+    }
     const due = state.supplements.filter((s) => s.active && week >= s.weekFrom && week <= s.weekTo);
 
     if (me?.role === 'dad') {

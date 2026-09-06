@@ -12,7 +12,7 @@ import { EmailOtp } from '../../src/components/EmailOtp';
 import { Platform } from 'react-native';
 import { openPrivacy, openTerms } from '../../src/lib/legal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, roleColor, space } from '../../src/theme';
+import { colors, roleColor, roleLabel, space } from '../../src/theme';
 import { tr } from '../../src/i18n';
 
 export default function Family() {
@@ -96,7 +96,7 @@ export default function Family() {
                     <View>
                       <Row>
                         <Body style={{ fontWeight: '700' }}>{m.name}</Body>
-                        <Pill text={tr(m.relation ?? roleColor[m.role].label)} tone={m.role === 'mom' ? 'pine' : m.role === 'dad' ? 'apricot' : 'slate'} />
+                        <Pill text={tr(m.relation ?? roleLabel(m.role, state.pregnancy.stage))} tone={m.role === 'mom' ? 'pine' : m.role === 'dad' ? 'apricot' : 'slate'} />
                         {isMe && <Caption>{tr('（我）')}</Caption>}
                       </Row>
                       <Caption>

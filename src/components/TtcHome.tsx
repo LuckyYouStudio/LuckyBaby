@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDerived, useStore } from '../store/store';
 import { Body, Body2, Button, Caption, Card, Field, H1, Row } from './ui';
-import { colors, roleColor, space } from '../theme';
+import { colors, roleLabel, space } from '../theme';
 import { addDays, fmtDate, today, uid } from '../lib/pregnancy';
 import { diffDays, type CycleView } from '../lib/cycle';
 import { tr } from '../i18n';
@@ -69,7 +69,7 @@ export function TtcHome() {
   if (me.role === 'family') {
     return (
       <View style={{ marginBottom: space.lg }}>
-        <Caption>{tr('{mom} 的备孕期 · 你是{role}', { mom: state.pregnancy.momName, role: tr(roleColor[me.role].label) })}</Caption>
+        <Caption>{tr('{mom} 的备孕期 · 你是{role}', { mom: state.pregnancy.momName, role: tr(roleLabel(me.role, 'ttc')) })}</Caption>
         <H1>{tr('备孕中')}</H1>
         <Body2 style={{ marginTop: 6 }}>{tr('备孕的具体记录只有小两口自己能看到。等到有好消息，这里会第一时间告诉你。')}</Body2>
       </View>
@@ -80,7 +80,7 @@ export function TtcHome() {
     <View>
       <Row style={{ justifyContent: 'space-between', marginBottom: space.md }}>
         <View style={{ flex: 1 }}>
-          <Caption>{me.role === 'mom' ? tr('你好，{name} · 备孕中', { name: me.name }) : tr('{mom} 备孕中 · 你是{role}', { mom: state.pregnancy.momName, role: tr(roleColor[me.role].label) })}</Caption>
+          <Caption>{me.role === 'mom' ? tr('你好，{name} · 备孕中', { name: me.name }) : tr('{mom} 备孕中 · 你是{role}', { mom: state.pregnancy.momName, role: tr(roleLabel(me.role, 'ttc')) })}</Caption>
           <H1>{headline(cycle)}</H1>
         </View>
       </Row>

@@ -207,4 +207,8 @@ export const en: Record<string, string> = {
   '退出家庭': 'Leave family', '删除本机全部记录并重新开始？云端的家庭会保留，家人不受影响。': 'Delete everything on this phone and start over? The family stays in the cloud; others are not affected.',
   '退出后本机记录清空，家人那边会看到你已退出。之后可以凭邀请码重新加入。': 'This clears the phone and removes you from the family. You can rejoin later with the invite code.',
   '退出': 'Leave', '退出家庭并清空本机数据': 'Leave family & clear this phone',
+  '备孕妈妈': 'Hopeful mom', '备孕爸爸': 'Hopeful dad', '你好，备孕妈妈': 'Hi, hopeful mom', '加入她的家庭': 'Join her family', '我来建家庭': 'Start the family', '准妈妈 / 备孕妈妈': 'Mom-to-be / hopeful mom',
+  '先由你建立这个家庭。之后用邀请码把他和家人加进来，他们能看到什么由你决定。': 'You start the family. Then invite him and relatives with a code; you decide what they can see.',
+  '让她把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。': 'Ask her for the 6-character invite code on her Family tab. She decides what you can see.',
+  '准爸爸 / 备孕爸爸': 'Dad-to-be / hopeful dad', '和她的关系': 'Relationship to her',
 };

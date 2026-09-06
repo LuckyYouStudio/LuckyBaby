@@ -138,13 +138,13 @@ export default function Onboarding() {
             <Caption style={{ flex: 1, marginRight: 8 }} numberOfLines={1}>{tr('幸运宝贝 · 一家人一起记录的孕期')}</Caption>
             <LangToggle compact />
           </Row>
-          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? tr('你好，准妈妈') : tr('加入她的孕期')}</H1>
+          <H1 style={{ marginBottom: 16 }}>{flow === 'create' ? (stage === 'ttc' ? tr('你好，备孕妈妈') : tr('你好，准妈妈')) : tr('加入她的家庭')}</H1>
 
-          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我是准妈妈'), d: tr('建立家庭') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
+          <Choice value={flow} onChange={setFlow} options={[{ v: 'create', t: tr('我来建家庭'), d: tr('准妈妈 / 备孕妈妈') }, { v: 'join', t: tr('我有邀请码'), d: tr('准爸爸 / 家人') }]} />
 
           {flow === 'create' ? (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>{tr('先由你建立这个家庭。之后用邀请码把准爸爸和家人加进来，他们能看到什么由你决定。')}</Body2>
+              <Body2 style={{ marginBottom: space.xl }}>{tr('先由你建立这个家庭。之后用邀请码把他和家人加进来，他们能看到什么由你决定。')}</Body2>
               <Field label={tr("你的称呼")} value={name} onChange={setName} placeholder={tr("例如：小雨")} />
               <Caption style={{ marginBottom: 6 }}>{tr('现在是')}</Caption>
               <Choice value={stage} onChange={setStage} options={[{ v: 'pregnant', t: tr('已怀孕'), d: tr('记产检、用药、孕周') }, { v: 'ttc', t: tr('备孕中'), d: tr('算排卵期、记月经') }]} />
@@ -170,7 +170,7 @@ export default function Onboarding() {
             </>
           ) : (
             <>
-              <Body2 style={{ marginBottom: space.xl }}>{tr('让准妈妈把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。')}</Body2>
+              <Body2 style={{ marginBottom: space.xl }}>{tr('让她把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。')}</Body2>
               <Field label={tr("邀请码")} value={code} onChange={(t) => setCode(t.toUpperCase())} placeholder={tr("例如：TY7K2Q")} />
               <Row style={{ gap: 8, marginTop: -8, marginBottom: space.lg }}>
                 <Button title={tr("粘贴邀请码")} small kind="ghost" onPress={paste} />
@@ -179,10 +179,10 @@ export default function Onboarding() {
               <Field label={tr("你的称呼")} value={jname} onChange={setJname} placeholder={role === 'dad' ? tr('例如：阿强') : tr('例如：外婆')} />
               <Caption style={{ marginBottom: 6 }}>{tr('你是')}</Caption>
               <Choice value={role} onChange={(r) => { setRole(r); setRelation(r === 'dad' ? tr('老公') : ''); }} options={[
-                { v: 'dad', t: tr('准爸爸'), d: tr('能记录、打卡、陪产检'), fg: roleColor.dad.fg, bg: roleColor.dad.bg },
+                { v: 'dad', t: tr('老公'), d: tr('准爸爸 / 备孕爸爸'), fg: roleColor.dad.fg, bg: roleColor.dad.bg },
                 { v: 'family', t: tr('家人'), d: tr('看动态和产检日程'), fg: roleColor.family.fg, bg: roleColor.family.bg },
               ]} />
-              <Caption style={{ marginBottom: 6 }}>{tr('和准妈妈的关系')}</Caption>
+              <Caption style={{ marginBottom: 6 }}>{tr('和她的关系')}</Caption>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: space.xl }}>
                 {RELATIONS().map((t) => (
                   <Pressable key={t} onPress={() => setRelation(t)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: relation === t ? colors.pineSoft : colors.paper2 }}>

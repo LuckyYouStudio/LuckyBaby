@@ -153,7 +153,7 @@ export const en: Record<string, string> = {
   '病历本（大白本）': 'Medical record book', '母子健康手册 / 电子条码': 'Maternity record book / e-code', '医保卡 / 就诊码': 'Insurance card / patient code', '早餐（抽完血就吃）': 'Breakfast (for after the blood draw)', '一瓶水（到了再喝）': 'A bottle of water (drink on arrival)',
 
   // 宝宝大小
-  '罂粟籽': 'poppy seed', '胚胎刚着床，开始形成胎盘。': 'Just implanted; the placenta is forming.', '芝麻': 'sesame seed', '心脏开始搏动的前奏。': 'Getting ready for the first heartbeat.', '扁豆': 'lentil', 'B 超可能已经看到胎心。': 'Ultrasound may already show a heartbeat.',
+  '小米粒': 'grain of millet', '胚胎刚着床，开始形成胎盘。': 'Just implanted; the placenta is forming.', '芝麻': 'sesame seed', '心脏开始搏动的前奏。': 'Getting ready for the first heartbeat.', '扁豆': 'lentil', 'B 超可能已经看到胎心。': 'Ultrasound may already show a heartbeat.',
   '蓝莓': 'blueberry', '手脚的雏形长出来了。': 'Tiny hands and feet are budding.', '树莓': 'raspberry', '手指脚趾开始分开。': 'Fingers and toes are separating.', '樱桃': 'cherry', '尾巴消失，开始像个小人。': 'The tail is gone; starting to look like a little person.',
   '金桔': 'kumquat', '所有重要器官都开始工作。': 'All major organs are working.', '无花果': 'fig', '会踢腿伸展了，只是你还感觉不到。': 'Kicking and stretching, though you can\'t feel it yet.', '青柠': 'lime', 'NT 检查的窗口期。': 'Window for the NT scan.',
   '豌豆荚': 'pea pod', '进入孕中期，孕吐通常会减轻。': 'Second trimester; nausea usually eases.', '柠檬': 'lemon', '能做表情了。': 'Can make facial expressions.', '苹果': 'apple', '开始长胎毛。': 'Fine hair is growing.',

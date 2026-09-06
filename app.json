@@ -90,7 +90,8 @@
             }
           }
         ]
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "luckybaby",
     "experiments": {

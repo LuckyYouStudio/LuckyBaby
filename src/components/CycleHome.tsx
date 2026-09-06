@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDerived, useStore } from '../store/store';
-import { Body, Body2, Button, Caption, Card, Field, H1, Row } from './ui';
+import { Body, Body2, Button, Caption, Card, H1, Row } from './ui';
+import { DateField } from './DateField';
 import { colors, space } from '../theme';
 import { addDays, fmtDate, uid } from '../lib/pregnancy';
 import type { CycleView } from '../lib/cycle';
@@ -80,7 +81,7 @@ export function CycleHome() {
         <Card style={{ marginBottom: space.lg }}>
           <Body style={{ fontWeight: '700' }}>{tr('先记一下上次月经第一天')}</Body>
           <Body2 style={{ marginBottom: space.md }}>{tr('有了这一天，就能预测下次月经和排卵期。')}</Body2>
-          <Field label={tr('上次月经第一天（YYYY-MM-DD）')} value={lmp} onChange={setLmp} placeholder="2026-08-20" keyboardType="numeric" />
+          <DateField label={tr('上次月经第一天')} value={lmp} onChange={setLmp} min={addDays(t, -120)} max={t} />
           <Button title={tr('记下')} onPress={() => /^\d{4}-\d{2}-\d{2}$/.test(lmp) && log('period_start', undefined, lmp)} disabled={!/^\d{4}-\d{2}-\d{2}$/.test(lmp)} />
         </Card>
       ) : (

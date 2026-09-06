@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDerived, useStore } from '../store/store';
-import { Body, Body2, Button, Caption, Card, Field, H1, Row } from './ui';
+import { Body, Body2, Button, Caption, Card, H1, Row } from './ui';
+import { DateField } from './DateField';
 import { colors, roleLabel, space } from '../theme';
 import { addDays, fmtDate, today, uid } from '../lib/pregnancy';
 import { diffDays, type CycleView } from '../lib/cycle';
@@ -91,7 +92,7 @@ export function TtcHome() {
           <Body2 style={{ marginBottom: space.md }}>{tr('有了这一天，就能算出排卵日和易孕期。')}</Body2>
           {me.role === 'mom' ? (
             <>
-              <Field label={tr('上次月经第一天（YYYY-MM-DD）')} value={lmp} onChange={setLmp} placeholder="2026-08-20" keyboardType="numeric" />
+              <DateField label={tr('上次月经第一天')} value={lmp} onChange={setLmp} min={addDays(t, -120)} max={t} />
               <Button title={tr('记下')} onPress={() => /^\d{4}-\d{2}-\d{2}$/.test(lmp) && log('period_start', undefined, lmp)} disabled={!/^\d{4}-\d{2}-\d{2}$/.test(lmp)} />
             </>
           ) : <Caption>{tr('这一项由她来记。')}</Caption>}

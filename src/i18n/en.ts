@@ -240,4 +240,5 @@ export const en: Record<string, string> = {
   '历': 'C', '日历': 'Calendar', '本人': 'Me',
   '开始记录': 'Start tracking', '我的动态': 'My feed',
   '预计排卵 {o}，排卵期 {a}–{b}': 'Ovulation ~{o}, window {a}–{b}',
+  '点击选择日期': 'Tap to pick a date', '收起': 'Done', '选择': 'Pick', '完成': 'Done', '末次月经第一天': 'First day of last period', '上次月经第一天': 'First day of last period',
 };

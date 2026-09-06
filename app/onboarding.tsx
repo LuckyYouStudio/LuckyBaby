@@ -8,6 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../src/store/store';
 import { Body, Body2, Button, Caption, Field, H1, Row, Screen } from '../src/components/ui';
+import { DateField } from '../src/components/DateField';
 import { colors, roleColor, space } from '../src/theme';
 import { addDays, dueFromLmp, today, uid } from '../src/lib/pregnancy';
 import { cloudEnabled, ensureSession } from '../src/lib/supabase';
@@ -152,12 +153,12 @@ export default function Onboarding() {
                 <>
                   <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
                   <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: tr('末次月经') }, { v: 'due', t: tr('医生给的预产期') }]} />
-                  <Field label={mode === 'lmp' ? tr('末次月经第一天（YYYY-MM-DD）') : tr('预产期（YYYY-MM-DD）')} value={date} onChange={setDate} placeholder="2026-06-26" keyboardType="numeric" />
+                  <DateField label={mode === 'lmp' ? tr('末次月经第一天') : tr('预产期')} value={date} onChange={setDate} min={mode === 'lmp' ? addDays(today(), -300) : today()} max={mode === 'lmp' ? today() : addDays(today(), 300)} />
                   {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>{tr('预产期')} {dueDate}</Body>}
                 </>
               ) : (
                 <>
-                  <Field label={tr('上次月经第一天（YYYY-MM-DD）')} value={lastPeriod} onChange={setLastPeriod} placeholder="2026-08-20" keyboardType="numeric" />
+                  <DateField label={tr('上次月经第一天')} value={lastPeriod} onChange={setLastPeriod} min={addDays(today(), -120)} max={today()} />
                   <Row style={{ gap: 12 }}>
                     <View style={{ flex: 1 }}><Field label={tr('平均周期（天）')} value={cycleLen} onChange={setCycleLen} keyboardType="numeric" /></View>
                     <View style={{ flex: 1 }}><Field label={tr('经期（天）')} value={periodLen} onChange={setPeriodLen} keyboardType="numeric" /></View>

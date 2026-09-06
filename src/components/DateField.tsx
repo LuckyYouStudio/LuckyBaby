@@ -21,7 +21,7 @@ export function DateField({ label, value, onChange, min, max, placeholder }: { l
         <Text style={{ color: colors.pine, fontWeight: '700' }}>{open ? tr('收起') : tr('选择')}</Text>
       </Pressable>
       {open && Platform.OS === 'ios' && (
-        <View style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderTopWidth: 0, borderBottomLeftRadius: radius.md, borderBottomRightRadius: radius.md, alignItems: 'center', paddingBottom: 6 }}>
+        <View style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderTopWidth: 0, borderBottomLeftRadius: radius.md, borderBottomRightRadius: radius.md, alignItems: 'center', paddingBottom: 6, overflow: 'hidden', width: '100%' }}>
           <DateTimePicker value={d} mode="date" display="spinner" locale={getLang() === 'en' ? 'en-US' : 'zh-CN'} themeVariant={isDark ? 'dark' : 'light'} minimumDate={min ? parseYmd(min) : undefined} maximumDate={max ? parseYmd(max) : undefined} onChange={(_, dt) => pick(dt)} style={{ height: 180, alignSelf: 'stretch' }} />
           <Button title={tr('完成')} small kind="ghost" onPress={() => setOpen(false)} />
         </View>

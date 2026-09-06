@@ -70,7 +70,9 @@ export default function Today() {
         </View>
         <Row style={{ justifyContent: 'space-between', marginBottom: space.lg }}>
           <Caption>{tr(['孕早期', '孕中期', '孕晚期'][trimester(g.week) - 1])}</Caption>
-          <Caption>{tr('距预产期 {n} 天', { n: g.daysLeft })} · {fmtDate(state.pregnancy.dueDate)}</Caption>
+          <Pressable onPress={() => me.role !== 'family' && router.push('/pregnancy' as never)}>
+            <Caption style={me.role !== 'family' ? { color: colors.pine } : undefined}>{tr('距预产期 {n} 天', { n: g.daysLeft })} · {fmtDate(state.pregnancy.dueDate)}{me.role !== 'family' ? ' ›' : ''}</Caption>
+          </Pressable>
         </Row>
 
         {me.role === 'mom' && (

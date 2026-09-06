@@ -62,7 +62,8 @@ type Action =
   | { type: 'addCycleLog'; log: CycleLog; activity?: string }
   | { type: 'deleteCycleLog'; id: string }
   | { type: 'setCycle'; cycleLen?: number; periodLen?: number }
-  | { type: 'becomePregnant'; dueDate: string; lmp?: string; byId: string };
+  | { type: 'becomePregnant'; dueDate: string; lmp?: string; byId: string }
+  | { type: 'updatePregnancy'; dueDate: string; lmp?: string; babyNickname?: string; byId: string };
 
 /** 把日期编进 supplementId 的末 12 位，得到一个确定的合法 UUID */
 function logIdFor(supplementId: string, date: string) {
@@ -201,6 +202,13 @@ function reducer(s: AppState, a: Action): AppState {
     }
     case 'deleteCycleLog':
       return { ...s, cycleLogs: (s.cycleLogs ?? []).filter((l) => l.id !== a.id), activities: s.activities.filter((x) => x.refId !== a.id) };
+    case 'updatePregnancy': {
+      // 改预产期：模板里还没做的产检按新预产期重新排日期；用户自己加的和已完成的不动
+      const changed = a.dueDate !== s.pregnancy.dueDate;
+      const checkups = changed ? s.checkups.map((c) => (c.fromTemplate && !c.done ? { ...c, date: dateOfWeek(a.dueDate, c.weekFrom) } : c)) : s.checkups;
+      const activities = changed ? [act(a.byId, 'system', `预产期改为 ${a.dueDate}`), ...s.activities] : s.activities;
+      return { ...s, pregnancy: { ...s.pregnancy, dueDate: a.dueDate, lmp: a.lmp, babyNickname: a.babyNickname }, checkups, activities };
+    }
     case 'setCycle':
       return { ...s, pregnancy: { ...s.pregnancy, ...(a.cycleLen ? { cycleLen: a.cycleLen } : {}), ...(a.periodLen ? { periodLen: a.periodLen } : {}) } };
     case 'becomePregnant': {

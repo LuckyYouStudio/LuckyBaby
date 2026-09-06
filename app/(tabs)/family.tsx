@@ -174,6 +174,17 @@ export default function Family() {
             )}
           </Card>
         )}
+        {me.role !== 'family' && (state.pregnancy.stage ?? 'pregnant') === 'pregnant' && (
+          <Card style={{ marginTop: space.md }} onPress={() => router.push('/pregnancy' as never)}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Body style={{ fontWeight: '700' }}>{tr('孕期信息')}</Body>
+                <Caption>{tr('预产期 {d} · 改预产期、末次月经、宝宝小名', { d: state.pregnancy.dueDate })}</Caption>
+              </View>
+              <Caption style={{ color: colors.pine }}>{tr('修改')}</Caption>
+            </Row>
+          </Card>
+        )}
         <Card style={{ marginTop: space.md }}>
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={{ flex: 1, marginRight: 8 }}>

@@ -211,4 +211,8 @@ export const en: Record<string, string> = {
   '先由你建立这个家庭。之后用邀请码把他和家人加进来，他们能看到什么由你决定。': 'You start the family. Then invite him and relatives with a code; you decide what they can see.',
   '让她把「家庭」页的 6 位邀请码发给你。加入后你看到的内容由她决定。': 'Ask her for the 6-character invite code on her Family tab. She decides what you can see.',
   '准爸爸 / 备孕爸爸': 'Dad-to-be / hopeful dad', '和她的关系': 'Relationship to her',
+  '孕期信息': 'Pregnancy details', '预产期 {d} · 改预产期、末次月经、宝宝小名': 'Due {d} · edit due date, last period, nickname', '修改': 'Edit', '预产期改为 {date}': 'Due date changed to {date}',
+  '预产期一改，还没做的模板产检会按新日期重新排；你自己加的和已完成的不动。': 'Changing the due date re-dates template checkups that are not done yet; your own and completed ones stay.',
+  '日期格式不对': 'Check the date format', '请按 YYYY-MM-DD 填写，例如 2027-05-29。': 'Use YYYY-MM-DD, for example 2027-05-29.', '保存修改': 'Save changes',
+  '填错了？回到备孕模式': 'Not pregnant after all? Back to trying-to-conceive',
 };

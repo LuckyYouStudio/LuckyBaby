@@ -46,10 +46,15 @@ export default function Onboarding() {
 
   // 建立家庭
   const [name, setName] = useState('');
+  const [stage, setStage] = useState<'pregnant' | 'ttc'>('pregnant');
   const [mode, setMode] = useState<'lmp' | 'due'>('lmp');
   const [date, setDate] = useState(addDays(today(), -70));
+  const [lastPeriod, setLastPeriod] = useState(addDays(today(), -14));
+  const [cycleLen, setCycleLen] = useState('28');
+  const [periodLen, setPeriodLen] = useState('5');
   const [nick, setNick] = useState('');
-  const validCreate = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const ymd = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const validCreate = name.trim().length > 0 && (stage === 'pregnant' ? ymd(date) : ymd(lastPeriod) && +cycleLen >= 15 && +cycleLen <= 60 && +periodLen >= 1 && +periodLen <= 10);
   const dueDate = mode === 'lmp' ? dueFromLmp(date) : date;
 
   // 加入家庭
@@ -67,7 +72,9 @@ export default function Onboarding() {
 
   const create = async () => {
     if (!validCreate) return;
-    const pregnancy = { dueDate, lmp: mode === 'lmp' ? date : undefined, momName: name.trim(), babyNickname: nick.trim() || undefined };
+    const pregnancy = stage === 'ttc'
+      ? { stage: 'ttc' as const, dueDate: '', lmp: lastPeriod, momName: name.trim(), babyNickname: nick.trim() || undefined, cycleLen: +cycleLen, periodLen: +periodLen }
+      : { stage: 'pregnant' as const, dueDate, lmp: mode === 'lmp' ? date : undefined, momName: name.trim(), babyNickname: nick.trim() || undefined };
     const me = { id: uid(), name: name.trim(), role: 'mom' as const, joinedAt: new Date().toISOString() };
     if (!cloudEnabled) { dispatch({ type: 'setup', pregnancy, me }); return; }
     setBusy(true);
@@ -139,11 +146,26 @@ export default function Onboarding() {
             <>
               <Body2 style={{ marginBottom: space.xl }}>{tr('先由你建立这个家庭。之后用邀请码把准爸爸和家人加进来，他们能看到什么由你决定。')}</Body2>
               <Field label={tr("你的称呼")} value={name} onChange={setName} placeholder={tr("例如：小雨")} />
-              <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
-              <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: tr('末次月经') }, { v: 'due', t: tr('医生给的预产期') }]} />
-              <Field label={mode === 'lmp' ? tr('末次月经第一天（YYYY-MM-DD）') : tr('预产期（YYYY-MM-DD）')} value={date} onChange={setDate} placeholder="2026-06-26" keyboardType="numeric" />
-              {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>{tr('预产期')} {dueDate}</Body>}
-              <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />
+              <Caption style={{ marginBottom: 6 }}>{tr('现在是')}</Caption>
+              <Choice value={stage} onChange={setStage} options={[{ v: 'pregnant', t: tr('已怀孕'), d: tr('记产检、用药、孕周') }, { v: 'ttc', t: tr('备孕中'), d: tr('算排卵期、记月经') }]} />
+              {stage === 'pregnant' ? (
+                <>
+                  <Caption style={{ marginBottom: 6 }}>{tr('推算孕周的方式')}</Caption>
+                  <Choice value={mode} onChange={setMode} options={[{ v: 'lmp', t: tr('末次月经') }, { v: 'due', t: tr('医生给的预产期') }]} />
+                  <Field label={mode === 'lmp' ? tr('末次月经第一天（YYYY-MM-DD）') : tr('预产期（YYYY-MM-DD）')} value={date} onChange={setDate} placeholder="2026-06-26" keyboardType="numeric" />
+                  {validCreate && <Body style={{ marginTop: -8, marginBottom: space.lg, color: colors.pine }}>{tr('预产期')} {dueDate}</Body>}
+                </>
+              ) : (
+                <>
+                  <Field label={tr('上次月经第一天（YYYY-MM-DD）')} value={lastPeriod} onChange={setLastPeriod} placeholder="2026-08-20" keyboardType="numeric" />
+                  <Row style={{ gap: 12 }}>
+                    <View style={{ flex: 1 }}><Field label={tr('平均周期（天）')} value={cycleLen} onChange={setCycleLen} keyboardType="numeric" /></View>
+                    <View style={{ flex: 1 }}><Field label={tr('经期（天）')} value={periodLen} onChange={setPeriodLen} keyboardType="numeric" /></View>
+                  </Row>
+                  <Caption style={{ marginTop: -8, marginBottom: space.lg }}>{tr('不确定就先填 28 和 5，记两个周期后会自动按你的实际周期算。怀上以后一键切换到孕期模式。')}</Caption>
+                </>
+              )}
+              {stage === 'pregnant' && <Field label={tr("宝宝小名（可选）")} value={nick} onChange={setNick} placeholder={tr("例如：小豆子")} />}
               {busy ? <ActivityIndicator color={colors.pine} style={{ marginTop: space.md }} /> : <Button title={tr("建立家庭")} onPress={create} disabled={!validCreate} style={{ marginTop: space.md }} />}
             </>
           ) : (

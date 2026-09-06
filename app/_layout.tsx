@@ -51,6 +51,7 @@ function Gate() {
       <Stack.Screen name="kicks" options={{ title: tr('数胎动'), presentation: 'fullScreenModal' }} />
       <Stack.Screen name="contractions" options={{ title: tr('宫缩计时'), presentation: 'fullScreenModal' }} />
       <Stack.Screen name="packing" options={{ title: tr('待产包') }} />
+      <Stack.Screen name="cycle" options={{ title: tr('备孕日历') }} />
       <Stack.Screen name="settings" options={{ title: tr('外观与字号') }} />
       <Stack.Screen name="invite" options={{ title: tr('邀请家人'), presentation: 'modal' }} />
       <Stack.Screen name="scan" options={{ title: tr('扫码加入'), presentation: 'fullScreenModal' }} />

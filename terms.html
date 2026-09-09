@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>幸运宝贝 用户协议 / LuckyBaby Terms of Use</title>
+<style>body{margin:0;background:#F5F6F2;color:#1F2A24;font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;line-height:1.7}.wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px}h1{font-size:26px}h2{font-size:18px;margin-top:28px}p,li{color:#2F3A34}small{color:#7C877F}a{color:#2E5E4E}
+.langbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px}
+.langbar a{font-size:13px;text-decoration:none;border:1px solid #D5D9D1;border-radius:14px;padding:4px 12px;color:#4B5750}
+.langbar a.on{background:#2E5E4E;border-color:#2E5E4E;color:#fff}
+</style></head><body><div class="wrap">
+<div class="langbar"><a href="?lang=zh" id="lz">中文</a><a href="?lang=en" id="le">English</a></div>
+<div id="zh"><h1>幸运宝贝 用户协议</h1>
+<h2>1. 服务内容</h2><p>幸运宝贝提供孕期记录、家庭共享与提醒功能。当前为免费内测版本，功能可能调整。</p>
+<h2>2. 你的责任</h2><p>请如实记录并妥善保管邀请码，邀请码可让他人加入你的家庭并查看你允许的内容。请勿上传违法或侵犯他人权利的内容。</p>
+<h2>3. 医疗声明</h2><p>本应用不构成医疗建议。产检时间表、参考范围、营养补充说明均为一般性信息，具体以医生指导为准。出现紧急情况请立即就医。</p>
+<h2>4. 数据与隐私</h2><p>见<a href="privacy.html?lang=zh">隐私政策</a>。</p>
+<h2>5. 免责</h2><p>在法律允许范围内，我们不对因使用或无法使用本应用造成的损失承担责任。请定期确认云端同步正常。</p>
+<h2>6. 终止</h2><p>你可随时删除账号。我们可在违反本协议时终止服务。</p>
+<h2>7. 联系</h2><p><a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a></p></div>
+<div id="en" hidden><h1>LuckyBaby Terms of Use</h1>
+<h2>1. The service</h2><p>LuckyBaby provides pregnancy journaling, family sharing and reminders. It is currently a free beta and features may change.</p>
+<h2>2. Your responsibilities</h2><p>Keep your invite code safe: it lets others join your family and see what you allow. Do not upload unlawful content or content that infringes others' rights.</p>
+<h2>3. Medical disclaimer</h2><p>The app is not medical advice. Checkup schedules, reference ranges and supplement notes are general information; follow your doctor. In an emergency, seek care immediately.</p>
+<h2>4. Data and privacy</h2><p>See the <a href="privacy.html?lang=en">Privacy Policy</a>.</p>
+<h2>5. Liability</h2><p>To the extent permitted by law, we are not liable for losses arising from use of or inability to use the app. Please check that cloud sync is working regularly.</p>
+<h2>6. Termination</h2><p>You may delete your account at any time. We may terminate service for breaches of these terms.</p>
+<h2>7. Contact</h2><p><a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a></p></div>
+<p><small>幸运宝贝 LuckyBaby · LuckyYou Studio · 更新于 2026-09-09 · <a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a></small></p>
+</div>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('lang');
+  var lang=(q==='en'||q==='zh')?q:((navigator.language||'zh').toLowerCase().indexOf('zh')===0?'zh':'en');
+  document.getElementById('zh').hidden=lang!=='zh';
+  document.getElementById('en').hidden=lang!=='en';
+  document.documentElement.lang=lang==='en'?'en':'zh-CN';
+  document.getElementById(lang==='en'?'le':'lz').className='on';
+})();
+</script></body></html>

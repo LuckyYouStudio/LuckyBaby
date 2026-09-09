@@ -1,12 +1,14 @@
 // 隐私政策 / 用户协议 页面：/functions/v1/legal?doc=privacy|terms&lang=zh|en
 const css = `body{margin:0;background:#F5F6F2;color:#1F2A24;font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;line-height:1.7}.wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px}h1{font-size:26px}h2{font-size:18px;margin-top:28px}p,li{color:#2F3A34}small{color:#7C877F}a{color:#2E5E4E}`;
-const wrap = (title: string, body: string, lang: string) => `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style></head><body><div class="wrap">${body}<p><small>幸运宝贝 LuckyBaby · LuckyYou Studio · 更新于 2026-09-05</small></p></div></body></html>`;
+const wrap = (title: string, body: string, lang: string) => `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style></head><body><div class="wrap">${body}<p><small>幸运宝贝 LuckyBaby · LuckyYou Studio · 更新于 2026-09-09</small></p></div></body></html>`;
 
 const privacyZh = `<h1>幸运宝贝 隐私政策</h1>
 <p>幸运宝贝（LuckyBaby）是一款供家庭共同记录孕期的应用。我们的原则很简单：<strong>数据属于你的家庭，不做广告，不做社区，不出售、不共享给任何第三方用于营销。</strong></p>
 <h2>1. 我们收集什么</h2>
 <ul>
-<li><strong>你主动记录的内容</strong>：产检日期与结果、体重、症状、心情、胎动、宫缩、用药与补充剂打卡、报告照片、待产包清单、家庭动态与留言。其中产检结果、体重、症状等属于<strong>健康信息（敏感个人信息）</strong>，我们仅在你首次使用并单独同意后处理。</li>
+<li><strong>你主动记录的内容</strong>：产检日期与结果、体重、症状、心情、胎动、宫缩、用药与补充剂打卡、报告照片、待产包清单、家庭动态与留言。</li>
+<li><strong>备孕与经期记录</strong>（选择「备孕中」或「只记经期」时）：月经开始与结束日期、经量、痛经程度、经期症状、同房记录、排卵试纸结果、基础体温，以及由这些推算出的排卵日与易孕期。</li>
+<li>以上产检结果、体重、症状、月经与备孕记录都属于<strong>健康信息（敏感个人信息）</strong>，其中同房记录属于<strong>性生活信息</strong>。我们仅在你首次使用并单独同意后处理，且只在你的家庭内可见——备孕与经期记录更严格，只有你和伴侣能看到，其他家人看不到。</li>
 <li><strong>账号信息</strong>：默认使用匿名账号；你可选择通过 Apple 登录或邮箱绑定，此时我们保存 Apple 提供的用户标识或你的邮箱地址，用于换机恢复。</li>
 <li><strong>设备信息</strong>：推送令牌（用于提醒）、语言与时区（用于按当地时间提醒）、错误日志（仅包含错误文本，不含记录内容）。</li>
 <li>我们<strong>不收集</strong>手机号、通讯录、位置、设备唯一标识，不接入任何第三方广告或统计 SDK。</li>
@@ -21,7 +23,7 @@ const privacyZh = `<h1>幸运宝贝 隐私政策</h1>
 <ul>
 <li>随时在 App 内查看、修改、删除任何记录。</li>
 <li>准妈妈可随时移出家庭成员。</li>
-<li>在「家庭」页可<strong>删除账号</strong>：准妈妈删除账号会删除整个家庭的云端数据；其他成员删除账号会退出家庭并删除自己的登录信息。删除不可恢复。</li>
+<li>在「家庭」页点<strong>「账号」</strong>可随时<strong>删除账号</strong>（无论是否绑定过登录方式都能删）：准妈妈删除账号会删除整个家庭的云端数据，包括报告照片；其他成员删除账号会退出家庭并删除自己的登录信息。删除不可恢复。</li>
 <li>可联系我们索取数据副本或提出其他请求：<a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a>。</li>
 </ul>
 <h2>6. 未成年人</h2>
@@ -35,7 +37,9 @@ const privacyEn = `<h1>LuckyBaby Privacy Policy</h1>
 <p>LuckyBaby is a pregnancy journal shared by a family. Our principle is simple: <strong>your data belongs to your family. No ads, no community, and we never sell or share it with third parties for marketing.</strong></p>
 <h2>1. What we collect</h2>
 <ul>
-<li><strong>What you record</strong>: checkup dates and results, weight, symptoms, mood, kicks, contractions, medication and supplement check-ins, report photos, hospital bag list, family feed and comments. Checkup results, weight and symptoms are <strong>health data (sensitive personal information)</strong> and are processed only after your separate consent on first use.</li>
+<li><strong>What you record</strong>: checkup dates and results, weight, symptoms, mood, kicks, contractions, medication and supplement check-ins, report photos, hospital bag list, family feed and comments.</li>
+<li><strong>Cycle and conception records</strong> (when you choose "Trying to conceive" or "Just my cycle"): period start and end dates, flow, cramp level, cycle symptoms, intimacy logs, ovulation test results, basal body temperature, and the ovulation and fertile-window estimates derived from them.</li>
+<li>All of the above — checkup results, weight, symptoms, cycle and conception records — is <strong>health data (sensitive personal information)</strong>, and intimacy logs are <strong>sexual activity data</strong>. We process it only after your separate consent on first use, and it stays inside your family. Cycle and conception records are stricter still: only you and your partner can see them, never other relatives.</li>
 <li><strong>Account</strong>: anonymous by default. If you link with Apple or email we store the Apple user identifier or your email address so you can restore on a new phone.</li>
 <li><strong>Device</strong>: push token (reminders), language and time zone (local-time reminders), error logs (error text only, never your records).</li>
 <li>We <strong>do not</strong> collect phone numbers, contacts, location or device identifiers, and we use no third-party advertising or analytics SDKs.</li>
@@ -50,7 +54,7 @@ const privacyEn = `<h1>LuckyBaby Privacy Policy</h1>
 <ul>
 <li>View, edit or delete any record in the app at any time.</li>
 <li>The mom-to-be can remove members at any time.</li>
-<li><strong>Delete account</strong> on the Family tab: the mom-to-be's deletion removes the whole family's cloud data; other members leave the family and delete their sign-in. Deletion is permanent.</li>
+<li><strong>Delete account</strong> any time from Family → <strong>Account</strong> (available whether or not you have linked a sign-in method): the mom-to-be's deletion removes the whole family's cloud data including report photos; other members leave the family and delete their sign-in. Deletion is permanent.</li>
 <li>Contact us for a data copy or other requests: <a href="mailto:liushuang19920505@gmail.com">liushuang19920505@gmail.com</a>.</li>
 </ul>
 <h2>6. Children</h2>

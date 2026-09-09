@@ -11,7 +11,7 @@
       "bundleIdentifier": "com.luckyyoustudio.luckybaby",
       "appleTeamId": "JU4P42JZ54",
       "usesAppleSignIn": true,
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "幸运宝贝",
@@ -19,7 +19,8 @@
           "zh-Hans",
           "en"
         ],
-        "CFBundleDevelopmentRegion": "zh-Hans"
+        "CFBundleDevelopmentRegion": "zh-Hans",
+        "NSPhotoLibraryAddUsageDescription": "用来把家庭邀请二维码保存到你的相册，方便发给家人。/ Used to save the family invite QR code to your photo library so you can send it to relatives."
       }
     },
     "android": {
@@ -51,7 +52,7 @@
           ]
         }
       ],
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -15,6 +15,7 @@ import { cloudEnabled, ensureSession } from '../src/lib/supabase';
 import { createFamilyRemote, joinFamilyRemote, myFamilyRemote, pullAll } from '../src/store/sync';
 import { restoreEmailStart, signInWithApple } from '../src/lib/account';
 import { EmailOtp } from '../src/components/EmailOtp';
+import { AppleButton } from '../src/components/AppleButton';
 import type { Role } from '../src/data/types';
 import { tr } from '../src/i18n';
 
@@ -198,13 +199,10 @@ export default function Onboarding() {
           <Caption style={{ marginTop: space.lg, textAlign: 'center' }}>{cloudEnabled ? tr('数据只在你的家庭内可见。不做社区，不做广告，不卖数据。') : tr('数据只存在你的手机里。不做社区，不做广告，不卖数据。')}</Caption>
           {cloudEnabled && (
             <View style={{ marginTop: space.lg, alignItems: 'center' }}>
-              {Platform.OS === 'ios' && (
-                <Pressable onPress={restore} disabled={busy}>
-                  <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('换了手机？用 Apple 登录恢复')}</Caption>
-                </Pressable>
-              )}
-              <Pressable onPress={() => setRestoreMode((v) => !v)} disabled={busy} style={{ marginTop: 8 }}>
-                <Caption style={{ color: colors.pine, fontWeight: '700' }}>{Platform.OS === 'ios' ? tr('或用邮箱链接恢复') : tr('换了手机？用邮箱链接恢复')}</Caption>
+              <Caption style={{ marginBottom: 8, textAlign: 'center' }}>{tr('换了手机？用原来的方式恢复这个家庭')}</Caption>
+              <AppleButton kind="signIn" onPress={restore} disabled={busy} />
+              <Pressable onPress={() => setRestoreMode((v) => !v)} disabled={busy} style={{ marginTop: 12 }}>
+                <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('用邮箱链接恢复')}</Caption>
               </Pressable>
             </View>
           )}

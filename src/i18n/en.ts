@@ -241,4 +241,16 @@ export const en: Record<string, string> = {
   '开始记录': 'Start tracking', '我的动态': 'My feed',
   '预计排卵 {o}，排卵期 {a}–{b}': 'Ovulation ~{o}, window {a}–{b}',
   '点击选择日期': 'Tap to pick a date', '收起': 'Done', '选择': 'Pick', '完成': 'Done', '末次月经第一天': 'First day of last period', '上次月经第一天': 'First day of last period',
+  // 账号页（苹果 5.1.1(v) 要求删除账号入口随时可达）
+  '账号': 'Account', '管理': 'Manage', '当前状态': 'Current status', '绑定登录方式': 'Add a sign-in method',
+  '还没有绑定登录方式': 'No sign-in method yet', '已绑定 Apple ID': 'Signed in with Apple', '已绑定邮箱': 'Linked to an email address', '已绑定登录方式': 'Sign-in method linked',
+  '换手机或重装 App 后，用同样的方式登录就能找回这个家庭。': 'On a new phone or after reinstalling, sign in the same way to get this family back.',
+  '现在的记录只认这台手机。绑定之后，换手机或重装都能找回。': 'Right now your records live only on this phone. Add a sign-in method and you can restore them anywhere.',
+  '用邮箱绑定（安卓也能用）': 'Link an email address instead (works on Android too)',
+  '这个家庭在云端的全部记录会被永久删除：产检、用药、经期、报告照片、动态和留言。家人也会一起失去这些内容。': 'Everything this family has stored in the cloud will be permanently deleted: checkups, medication, cycle records, report photos, posts and comments. Your family members lose them too.',
+  '你会退出这个家庭，你的登录账号和这台手机上的记录会被永久删除。家里其他人的记录不受影响。': 'You will leave this family, and your account and the records on this phone will be permanently deleted. Everyone else keeps theirs.',
+  '此操作不可恢复。': 'This cannot be undone.', '真的要删除吗？删除后无法恢复。': 'Delete for good? This cannot be undone.',
+  '已绑定登录方式 · 也可以在这里删除账号': 'Sign-in method linked · delete your account here',
+  '绑定登录方式换手机不丢 · 也可以在这里删除账号': 'Add a sign-in method so nothing is lost · delete your account here',
+  '换了手机？用原来的方式恢复这个家庭': 'New phone? Restore this family the way you set it up', '用邮箱链接恢复': 'Restore with an email link',
 };

@@ -48,6 +48,9 @@ export async function bindApple(): Promise<string> {
 /** 删除账号：清云端数据 + 删除登录账号 */
 export async function deleteAccount(): Promise<void> {
   if (!supabase) return;
+  // 示例家庭 / 纯本地模式下可能没有云端会话，此时只需调用方清本地，不该抛错
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess.session) return;
   const { data, error } = await supabase.functions.invoke('delete-account');
   if (error) throw error;
   if (data && (data as any).error) throw new Error((data as any).error);

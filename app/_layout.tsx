@@ -54,6 +54,7 @@ function Gate() {
       <Stack.Screen name="cycle" options={{ title: tr('备孕日历') }} />
       <Stack.Screen name="pregnancy" options={{ title: tr('孕期信息'), presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ title: tr('外观与字号') }} />
+      <Stack.Screen name="account" options={{ title: tr('账号') }} />
       <Stack.Screen name="invite" options={{ title: tr('邀请家人'), presentation: 'modal' }} />
       <Stack.Screen name="scan" options={{ title: tr('扫码加入'), presentation: 'fullScreenModal' }} />
       <Stack.Screen name="join" options={{ headerShown: false }} />

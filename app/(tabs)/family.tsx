@@ -7,11 +7,9 @@ import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Pill, Row, Screen, Section } from '../../src/components/ui';
 import { Feed } from '../../src/components/Feed';
 import { LangToggle } from '../../src/components/LangToggle';
-import { bindApple, bindEmailStart, deleteAccount, leaveFamily } from '../../src/lib/account';
-import { EmailOtp } from '../../src/components/EmailOtp';
-import { Platform } from 'react-native';
+import { leaveFamily } from '../../src/lib/account';
 import { openPrivacy, openTerms } from '../../src/lib/legal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { cloudEnabled } from '../../src/lib/supabase';
 import { colors, roleColor, roleLabel, space } from '../../src/theme';
 import { tr } from '../../src/i18n';
 
@@ -21,31 +19,6 @@ export default function Family() {
   const router = useRouter();
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [emailMode, setEmailMode] = useState(false);
-  const bind = async () => {
-    setBusy(true);
-    try {
-      const userId = await bindApple();
-      dispatch({ type: 'setCloudUser', userId, bound: true });
-      alert(tr('绑定成功'), tr('以后换手机，用 Apple 登录就能找回这个家庭。'));
-    } catch (e: any) {
-      if (String(e?.code) === 'ERR_REQUEST_CANCELED') return;
-      alert(tr('绑定失败'), String(e?.message ?? e));
-    } finally { setBusy(false); }
-  };
-  const removeAccount = () => alert(tr('删除账号'), me?.role === 'mom' ? tr('这会删除整个家庭在云端的全部记录，家人也会一起失去。此操作不可恢复。') : tr('你会退出这个家庭，并删除你的登录账号。此操作不可恢复。'), [
-    { text: tr('取消'), style: 'cancel' },
-    { text: tr('删除'), style: 'destructive', onPress: () => alert(tr('再确认一次'), tr('真的要删除吗？'), [
-      { text: tr('取消'), style: 'cancel' },
-      { text: tr('确定删除'), style: 'destructive', onPress: async () => {
-        setBusy(true);
-        try { await deleteAccount(); dispatch({ type: 'reset' }); AsyncStorage.clear().catch(() => {}); }
-        catch (e: any) { alert(tr('删除失败'), String(e?.message ?? e)); }
-        finally { setBusy(false); }
-      } },
-    ]) },
-  ]);
   if (!me) return null;
 
   const stats = (id: string) => {
@@ -150,28 +123,18 @@ export default function Family() {
           <Feed />
         </Section>
 
-        {state.cloud && (
-          <Card style={{ marginTop: space.xl, backgroundColor: state.cloud.bound ? colors.card : colors.apricotSoft, borderColor: state.cloud.bound ? colors.line : colors.apricotSoft }}>
-            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <View style={{ flex: 1, minWidth: 180 }}>
-                <Body style={{ fontWeight: '700' }}>{state.cloud.bound ? tr('账号已绑定 Apple ID') : tr('绑定账号，换手机不丢')}</Body>
-                <Caption>{state.cloud.bound ? tr('换手机时在首页用 Apple 登录即可恢复。') : tr('现在的数据只认这台手机。绑定 Apple ID 后，换手机或重装都能找回。')}</Caption>
+        {cloudEnabled && (
+          <Card
+            style={{ marginTop: space.xl, backgroundColor: state.cloud?.bound ? colors.card : colors.apricotSoft, borderColor: state.cloud?.bound ? colors.line : colors.apricotSoft }}
+            onPress={() => router.push('/account' as never)}
+          >
+            <Row style={{ justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Body style={{ fontWeight: '700' }}>{tr('账号')}</Body>
+                <Caption>{state.cloud?.bound ? tr('已绑定登录方式 · 也可以在这里删除账号') : tr('绑定登录方式换手机不丢 · 也可以在这里删除账号')}</Caption>
               </View>
-              {!state.cloud.bound && Platform.OS === 'ios' && <Button title={busy ? '…' : tr('通过 Apple 绑定')} small onPress={bind} disabled={busy} />}
+              <Caption style={{ color: colors.pine }}>{tr('管理')}</Caption>
             </Row>
-            {!state.cloud.bound && !emailMode && (
-              <Pressable onPress={() => setEmailMode(true)} style={{ marginTop: space.sm }}>
-                <Caption style={{ color: colors.pine, fontWeight: '700' }}>{Platform.OS === 'ios' ? tr('或用邮箱绑定（安卓也能用）') : tr('用邮箱绑定')}</Caption>
-              </Pressable>
-            )}
-            {!state.cloud.bound && emailMode && (
-              <EmailOtp sendLabel={tr('发绑定链接')} onSend={bindEmailStart} />
-            )}
-            {state.cloud.bound && (
-              <Pressable onPress={removeAccount} style={{ marginTop: space.sm }}>
-                <Caption style={{ color: colors.warn }}>{tr('删除账号')}</Caption>
-              </Pressable>
-            )}
           </Card>
         )}
         {me.role !== 'family' && (state.pregnancy.stage ?? 'pregnant') === 'pregnant' && (

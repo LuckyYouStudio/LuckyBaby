@@ -7,6 +7,7 @@ import { deleteReportPhoto, uploadReportPhoto } from '../../src/lib/photos';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDerived, useStore } from '../../src/store/store';
 import { Avatar, Body, Body2, Button, Caption, Card, Divider, Field, Pill, Row, Screen, Section } from '../../src/components/ui';
+import { DateField } from '../../src/components/DateField';
 import { colors, space } from '../../src/theme';
 import { METRIC_DEFS, defaultBring, metricFlag } from '../../src/data/schedule';
 import type { Checkup, Visibility } from '../../src/data/types';
@@ -97,10 +98,10 @@ export default function CheckupDetail() {
           ) : (
             <>
               <TextInput value={tr(c.title)} onChangeText={(t) => setC({ ...c, title: t })} style={{ fontSize: 24, fontWeight: '700', marginTop: 8, color: colors.ink }} />
-              <Row style={{ gap: 8, marginTop: 8 }}>
-                <View style={{ flex: 1 }}><Field label={tr("日期")} value={c.date ?? ''} onChange={(t) => setC({ ...c, date: t })} placeholder="YYYY-MM-DD" keyboardType="numeric" /></View>
-                <View style={{ flex: 1 }}><Field label={tr("医院")} value={c.hospital ?? ''} onChange={(t) => setC({ ...c, hospital: t })} placeholder={tr("例如：协和")} /></View>
-              </Row>
+              <View style={{ marginTop: 8 }}>
+                <DateField label={tr("日期")} value={c.date ?? ''} onChange={(t) => setC({ ...c, date: t })} placeholder={tr('未定')} />
+                <Field label={tr("医院")} value={c.hospital ?? ''} onChange={(t) => setC({ ...c, hospital: t })} placeholder={tr("例如：协和")} />
+              </View>
             </>
           )}
 

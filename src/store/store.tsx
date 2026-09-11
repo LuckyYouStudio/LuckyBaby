@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { AppState as AppStateRN } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Supplement, SupplementLog, Visibility } from '../data/types';
+import type { Activity, AppState, Checkup, CycleLog, DailyLog, Member, Pregnancy, Supplement, SupplementLog, Visibility } from '../data/types';
 import { CHECKUP_TEMPLATES, defaultBring, defaultPacking } from '../data/schedule';
 import { SUPPLEMENT_TEMPLATES } from '../data/supplements';
 import { dateOfWeek, gestation, today, uid } from '../lib/pregnancy';
+import { cycleView } from '../lib/cycle';
 import { demoState } from './demo';
 import { cloudEnabled, ensureSession, supabase } from '../lib/supabase';
-import { myFamilyRemote, pullAll, pushDiff, reportClientError, subscribe, type CloudInfo, type RemoteSlices } from './sync';
+import { canonPregnancy, myFamilyRemote, pullAll, pushDiff, reportClientError, subscribe, type CloudInfo, type RemoteSlices } from './sync';
 import { cancelReminders, rescheduleReminders } from '../lib/reminders';
 import { registerPushToken } from '../lib/push';
 import { alert } from '../lib/alert';
@@ -27,6 +28,7 @@ export const emptyState: AppState = {
   supplementLogs: [],
   logs: [],
   activities: [],
+  cycleLogs: [],
   cloud: null,
 };
 
@@ -56,7 +58,13 @@ type Action =
   | { type: 'consent' }
   | { type: 'setSettings'; settings: Partial<NonNullable<AppState['settings']>> }
   | { type: 'togglePacking'; id: string; byId: string }
-  | { type: 'addPacking'; group: string; text: string };
+  | { type: 'addPacking'; group: string; text: string }
+  | { type: 'addCycleLog'; log: CycleLog; activity?: string }
+  | { type: 'deleteCycleLog'; id: string }
+  | { type: 'setCycle'; cycleLen?: number; periodLen?: number }
+  | { type: 'becomePregnant'; dueDate: string; lmp?: string; byId: string }
+  | { type: 'updatePregnancy'; dueDate: string; lmp?: string; babyNickname?: string; byId: string }
+  | { type: 'startTtc'; byId: string };
 
 /** 把日期编进 supplementId 的末 12 位，得到一个确定的合法 UUID */
 function logIdFor(supplementId: string, date: string) {
@@ -71,6 +79,13 @@ function act(byId: string, kind: Activity['kind'], text: string, visibility: Vis
 function seedFromTemplates(dueDate: string): { checkups: Checkup[]; supplements: Supplement[] } {
   const checkups: Checkup[] = CHECKUP_TEMPLATES.map((t) => ({ ...t, id: uid(), date: dateOfWeek(dueDate, t.weekFrom), done: false, metrics: [], visibility: 'partner', fromTemplate: true, bringItems: defaultBring(t.notes) }));
   const supplements: Supplement[] = SUPPLEMENT_TEMPLATES.map((t) => ({ ...t, id: uid(), active: true, visibility: 'partner' }));
+  return { checkups, supplements };
+}
+
+/** 备孕期：只有孕前检查一项，补充剂只留孕前就该吃的（叶酸、维生素 D） */
+function seedTtc(): { checkups: Checkup[]; supplements: Supplement[] } {
+  const checkups: Checkup[] = [{ id: uid(), title: '孕前检查', weekFrom: 0, weekTo: 0, items: ['血常规、血型', '肝肾功能、血糖', 'TORCH、甲功', '妇科 B 超', '男方精液常规'], notes: '空腹。夫妻双方一起做', done: false, metrics: [], visibility: 'partner', fromTemplate: true, bringItems: defaultBring('空腹') }];
+  const supplements: Supplement[] = SUPPLEMENT_TEMPLATES.filter((t) => t.weekFrom === 0).map((t) => ({ ...t, id: uid(), active: true, visibility: 'partner' }));
   return { checkups, supplements };
 }
 
@@ -93,13 +108,16 @@ function reducer(s: AppState, a: Action): AppState {
     case 'seedDemo':
       return demoState();
     case 'setup': {
-      const seeded = seedFromTemplates(a.pregnancy.dueDate);
+      const stage = a.pregnancy.stage ?? 'pregnant';
+      const ttc = stage === 'ttc';
+      const seeded = stage === 'pregnant' ? seedFromTemplates(a.pregnancy.dueDate) : ttc ? seedTtc() : { checkups: [], supplements: [] };
       const code = a.familyCode ?? Math.random().toString(36).slice(2, 8).toUpperCase();
-      const first = act(a.me.id, 'system', `${a.me.name} 创建了家庭，预产期 ${a.pregnancy.dueDate}`);
-      return { ...emptyState, onboarded: true, meId: a.me.id, familyCode: code, pregnancy: a.pregnancy, members: [a.me], ...seeded, activities: [first], cloud: a.cloud ?? null };
+      const first = act(a.me.id, 'system', stage === 'cycle' ? `${a.me.name} 开始记录经期` : ttc ? `${a.me.name} 创建了家庭，开始备孕` : `${a.me.name} 创建了家庭，预产期 ${a.pregnancy.dueDate}`);
+      const cycleLogs: CycleLog[] = stage !== 'pregnant' && a.pregnancy.lmp ? [{ id: uid(), kind: 'period_start', date: a.pregnancy.lmp, byId: a.me.id, at: new Date().toISOString() }] : [];
+      return { ...emptyState, consentAt: s.consentAt, settings: s.settings, onboarded: true, meId: a.me.id, familyCode: code, pregnancy: a.pregnancy, members: [a.me], ...seeded, activities: [first], cycleLogs, cloud: a.cloud ?? null };
     }
     case 'joinFamily':
-      return { ...emptyState, onboarded: true, meId: a.me.id, familyCode: a.familyCode, pregnancy: a.pregnancy, cloud: a.cloud, ...a.slices, members: a.slices.members.some((m) => m.id === a.me.id) ? a.slices.members : [...a.slices.members, a.me] };
+      return { ...emptyState, consentAt: s.consentAt, settings: s.settings, onboarded: true, meId: a.me.id, familyCode: a.familyCode, pregnancy: a.pregnancy, cloud: a.cloud, ...a.slices, members: a.slices.members.some((m) => m.id === a.me.id) ? a.slices.members : [...a.slices.members, a.me] };
     case 'applyRemote': {
       const L = a.lastSynced;
       const activities = mergeSlice(a.slices.activities, s.activities, L.activities).sort((x, y) => (x.at < y.at ? 1 : -1));
@@ -115,6 +133,9 @@ function reducer(s: AppState, a: Action): AppState {
         supplements: mergeSlice(a.slices.supplements, s.supplements, L.supplements),
         supplementLogs: mergeSlice(a.slices.supplementLogs, s.supplementLogs, L.supplementLogs),
         logs: mergeSlice(a.slices.logs, s.logs, L.logs),
+        cycleLogs: mergeSlice(a.slices.cycleLogs, s.cycleLogs ?? [], L.cycleLogs ?? []),
+        // 家庭信息（阶段/预产期/周期）：本地没改过就以服务端为准
+        pregnancy: a.slices.pregnancy && canonPregnancy(s.pregnancy) === canonPregnancy(L.pregnancy) ? a.slices.pregnancy : s.pregnancy,
         activities,
       };
     }
@@ -175,6 +196,39 @@ function reducer(s: AppState, a: Action): AppState {
     case 'addPacking': {
       const packing = (s.packing && s.packing.length ? s.packing : defaultPacking());
       return { ...s, packing: [...packing, { id: uid(), group: a.group, text: a.text, done: false }] };
+    }
+    case 'addCycleLog': {
+      const logs = (s.cycleLogs ?? []).filter((l) => !(l.date === a.log.date && l.kind === a.log.kind && ['period_start', 'period_end', 'lh_pos', 'lh_neg', 'bbt', 'flow', 'pain', 'symptom'].includes(l.kind)));
+      const activities = a.activity ? [act(a.log.byId, 'log', a.activity, 'partner', a.log.id), ...s.activities] : s.activities;
+      return { ...s, cycleLogs: [...logs, a.log], activities };
+    }
+    case 'deleteCycleLog':
+      return { ...s, cycleLogs: (s.cycleLogs ?? []).filter((l) => l.id !== a.id), activities: s.activities.filter((x) => x.refId !== a.id) };
+    case 'updatePregnancy': {
+      // 改预产期：模板里还没做的产检按新预产期重新排日期；用户自己加的和已完成的不动
+      const changed = a.dueDate !== s.pregnancy.dueDate;
+      const checkups = changed ? s.checkups.map((c) => (c.fromTemplate && !c.done ? { ...c, date: dateOfWeek(a.dueDate, c.weekFrom) } : c)) : s.checkups;
+      const activities = changed ? [act(a.byId, 'system', `预产期改为 ${a.dueDate}`), ...s.activities] : s.activities;
+      return { ...s, pregnancy: { ...s.pregnancy, dueDate: a.dueDate, lmp: a.lmp, babyNickname: a.babyNickname }, checkups, activities };
+    }
+    case 'startTtc': {
+      // 只记经期 → 备孕：补上孕前检查和叶酸/维生素 D
+      const seeded = seedTtc();
+      const keep = new Set(s.supplements.map((x) => x.name));
+      const by = s.members.find((m) => m.id === a.byId);
+      return { ...s, pregnancy: { ...s.pregnancy, stage: 'ttc' }, checkups: [...s.checkups, ...seeded.checkups], supplements: [...s.supplements, ...seeded.supplements.filter((x) => !keep.has(x.name))], activities: [act(a.byId, 'system', `${by?.name ?? s.pregnancy.momName} 开始备孕`), ...s.activities] };
+    }
+    case 'setCycle':
+      return { ...s, pregnancy: { ...s.pregnancy, ...(a.cycleLen ? { cycleLen: a.cycleLen } : {}), ...(a.periodLen ? { periodLen: a.periodLen } : {}) } };
+    case 'becomePregnant': {
+      // 备孕 → 怀孕：按预产期铺产检与补充剂模板，保留备孕期已有的记录
+      const seeded = seedFromTemplates(a.dueDate);
+      const keepNames = new Set(s.supplements.map((x) => x.name));
+      const supplements = [...s.supplements, ...seeded.supplements.filter((x) => !keepNames.has(x.name))];
+      const checkups = [...s.checkups.filter((c) => c.title !== '孕前检查' || c.done), ...seeded.checkups];
+      const by = s.members.find((m) => m.id === a.byId);
+      const first = act(a.byId, 'system', `🎉 ${by?.name ?? s.pregnancy.momName} 怀孕了！预产期 ${a.dueDate}`);
+      return { ...s, pregnancy: { ...s.pregnancy, stage: 'pregnant', dueDate: a.dueDate, lmp: a.lmp ?? s.pregnancy.lmp }, checkups, supplements, activities: [first, ...s.activities] };
     }
     default:
       return s;
@@ -264,7 +318,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   // 3b. 提醒：状态变化后重排（防抖）
-  const reminderKey = JSON.stringify({ e: state.remindersEnabled, me: state.meId, c: state.checkups.map((c) => [c.id, c.date, c.done, c.hospital, c.bringItems]), s: state.supplements.map((x) => [x.id, x.active, x.timeOfDay, x.weekFrom, x.weekTo]), l: state.supplementLogs.filter((l) => l.date === today()).map((l) => l.supplementId), d: state.pregnancy.dueDate });
+  const reminderKey = JSON.stringify({ e: state.remindersEnabled, me: state.meId, c: state.checkups.map((c) => [c.id, c.date, c.done, c.hospital, c.bringItems]), s: state.supplements.map((x) => [x.id, x.active, x.timeOfDay, x.weekFrom, x.weekTo]), l: state.supplementLogs.filter((l) => l.date === today()).map((l) => l.supplementId), d: state.pregnancy.dueDate, st: state.pregnancy.stage, cl: state.pregnancy.cycleLen, cy: (state.cycleLogs ?? []).map((l) => [l.kind, l.date]) });
   useEffect(() => {
     if (!hydrated.current) return;
     if (!state.remindersEnabled) { cancelReminders(); return; }
@@ -343,5 +397,7 @@ export function useDerived() {
     return v === 'family';
   };
   const byId = (id: string) => state.members.find((m) => m.id === id);
-  return { me, g, today: t, canSee, byId };
+  const stage = state.pregnancy.stage ?? 'pregnant';
+  const cycle = stage !== 'pregnant' ? cycleView(state.cycleLogs ?? [], state.pregnancy.cycleLen, state.pregnancy.periodLen, t) : null;
+  return { me, g, today: t, canSee, byId, stage, cycle };
 }

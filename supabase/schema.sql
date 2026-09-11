@@ -369,3 +369,60 @@ end $$;
 grant execute on function create_transfer_token() to authenticated;
 grant execute on function redeem_transfer_token(text) to authenticated;
 grant execute on function delete_my_data() to authenticated;
+-- ---------------------------------------------------------------------------
+-- 备孕模块（2026-09-05）：家庭阶段 + 月经/同房/试纸记录
+-- ---------------------------------------------------------------------------
+alter table families alter column due_date drop not null;
+alter table families add column if not exists stage text default 'pregnant' check (stage in ('ttc','pregnant'));
+alter table families add column if not exists cycle_len int default 28;
+alter table families add column if not exists period_len int default 5;
+-- 准父母可以改家庭信息（备孕→怀孕、预产期、周期长度、宝宝小名）
+create policy "parents update family" on families for update using (my_role(id) in ('mom','dad'));
+alter publication supabase_realtime add table families;
+
+create table if not exists cycle_logs (
+  id uuid primary key,
+  family_id uuid references families(id) on delete cascade,
+  kind text not null check (kind in ('period_start','period_end','sex','lh_pos','lh_neg','bbt','note')),
+  date date not null,
+  value numeric,
+  text text,
+  by_id uuid references members(id) on delete set null,
+  at timestamptz default now()
+);
+alter table cycle_logs enable row level security;
+-- 只有准妈妈和准爸爸能看，家人看不到
+create policy "parents read cycle_logs" on cycle_logs for select using (my_role(family_id) in ('mom','dad'));
+create policy "parents write cycle_logs" on cycle_logs for all using (my_role(family_id) in ('mom','dad'));
+alter publication supabase_realtime add table cycle_logs;
+
+-- create_family 加阶段与周期参数；老客户端只传前 6 个参数也能用
+drop function if exists create_family(date, date, text, text, uuid, text);
+create or replace function create_family(
+  p_due_date date, p_lmp date, p_mom_name text, p_baby_nickname text, p_member_id uuid default gen_random_uuid(), p_tz text default 'Asia/Shanghai',
+  p_stage text default 'pregnant', p_cycle_len int default 28, p_period_len int default 5
+) returns json language plpgsql security definer set search_path = public as $$
+declare
+  fid uuid; code text;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if p_stage = 'pregnant' and p_due_date is null then raise exception 'due date required'; end if;
+  loop
+    code := gen_invite_code();
+    exit when not exists (select 1 from families where invite_code = code);
+  end loop;
+  insert into families (invite_code, due_date, lmp, mom_name, baby_nickname, created_by, tz, stage, cycle_len, period_len)
+    values (code, p_due_date, p_lmp, p_mom_name, p_baby_nickname, auth.uid(), coalesce(p_tz, 'Asia/Shanghai'), coalesce(p_stage, 'pregnant'), coalesce(p_cycle_len, 28), coalesce(p_period_len, 5)) returning id into fid;
+  insert into members (id, family_id, user_id, name, role) values (p_member_id, fid, auth.uid(), p_mom_name, 'mom');
+  return json_build_object('family_id', fid, 'invite_code', code, 'member_id', p_member_id);
+end $$;
+grant execute on function create_family(date, date, text, text, uuid, text, text, int, int) to authenticated;
+-- drop old 5-arg overload (M1 leftover)
+drop function if exists create_family(date, date, text, text, uuid);
+-- 家人可以自己退出家庭（删掉自己的成员行）；准妈妈不能删自己
+create policy "member leaves" on members for delete using (user_id = auth.uid() and my_role(family_id) <> 'mom');
+-- 经期记录模式（2026-09-06）：families.stage 允许 cycle；cycle_logs 加经量/痛经/症状
+alter table families drop constraint if exists families_stage_check;
+alter table families add constraint families_stage_check check (stage in ('cycle','ttc','pregnant'));
+alter table cycle_logs drop constraint if exists cycle_logs_kind_check;
+alter table cycle_logs add constraint cycle_logs_kind_check check (kind in ('period_start','period_end','sex','lh_pos','lh_neg','bbt','note','flow','pain','symptom'));

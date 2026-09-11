@@ -1,6 +1,6 @@
 // 每周宝宝大小类比 + 一句话（面向全家，不做医学结论）
 export const BABY_WEEKS: Record<number, { like: string; length: string; note: string }> = {
-  4: { like: '罂粟籽', length: '≈ 1 mm', note: '胚胎刚着床，开始形成胎盘。' },
+  4: { like: '小米粒', length: '≈ 1 mm', note: '胚胎刚着床，开始形成胎盘。' },
   5: { like: '芝麻', length: '≈ 2 mm', note: '心脏开始搏动的前奏。' },
   6: { like: '扁豆', length: '≈ 5 mm', note: 'B 超可能已经看到胎心。' },
   7: { like: '蓝莓', length: '≈ 1 cm', note: '手脚的雏形长出来了。' },

@@ -1,6 +1,7 @@
 // 邀请：链接、分享文案
 import { getLang, tr } from '../i18n';
-export const INVITE_BASE = 'https://wpjmmgqqdyycmxlnnkfd.supabase.co/functions/v1/join';
+// 同 legal.ts：落地页必须能渲染成网页，所以放 GitHub Pages 而不是 Supabase functions 域名。
+export const INVITE_BASE = 'https://luckyyoustudio.github.io/LuckyBaby/join.html';
 export const SCHEME_JOIN = 'luckybaby://join?code=';
 
 export function inviteUrl(code: string, from?: string) {

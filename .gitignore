@@ -49,3 +49,4 @@ supabase/.temp/
 # 原生工程由 expo prebuild 生成
 ios/
 android/
+site/

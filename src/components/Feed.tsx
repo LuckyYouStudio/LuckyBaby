@@ -12,6 +12,8 @@ function displayText(a: Activity): string {
   const t = a.text;
   let m = t.match(/^(.+) 加入了家庭$/);
   if (m) return tr('{name} 加入了家庭', { name: m[1] });
+  m = t.match(/^预产期改为 (\S+)$/);
+  if (m) return tr('预产期改为 {date}', { date: m[1] });
   m = t.match(/^(.+) 创建了家庭，预产期 (\S+)$/);
   if (m) return tr('{name} 创建了家庭，预产期 {date}', { name: m[1], date: m[2] });
   return t;

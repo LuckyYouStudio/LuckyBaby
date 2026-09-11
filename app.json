@@ -11,7 +11,7 @@
       "bundleIdentifier": "com.luckyyoustudio.luckybaby",
       "appleTeamId": "JU4P42JZ54",
       "usesAppleSignIn": true,
-      "buildNumber": "1",
+      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "幸运宝贝",
@@ -19,7 +19,8 @@
           "zh-Hans",
           "en"
         ],
-        "CFBundleDevelopmentRegion": "zh-Hans"
+        "CFBundleDevelopmentRegion": "zh-Hans",
+        "NSPhotoLibraryAddUsageDescription": "用来把家庭邀请二维码保存到你的相册，方便发给家人。/ Used to save the family invite QR code to your photo library so you can send it to relatives."
       }
     },
     "android": {
@@ -51,7 +52,7 @@
           ]
         }
       ],
-      "versionCode": 1
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -65,15 +66,18 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "用来把产检报告单照片放进对应的那次产检里。",
-          "cameraPermission": "用来直接拍下产检报告单。"
+          "photosPermission": "用来从相册选取产检报告单照片，放进对应的那次产检里。/ Used to pick checkup report photos from your library and attach them to the matching checkup.",
+          "cameraPermission": "用来扫描家人分享的邀请二维码，以及拍下产检报告单存进对应的产检。/ Used to scan a family invite QR code and to photograph checkup reports for the matching checkup.",
+          "microphonePermission": false
         }
       ],
       "expo-sharing",
       [
         "expo-camera",
         {
-          "cameraPermission": "用来扫描家人分享的邀请二维码。"
+          "cameraPermission": "用来扫描家人分享的邀请二维码，以及拍下产检报告单存进对应的产检。/ Used to scan a family invite QR code and to photograph checkup reports for the matching checkup.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       "expo-localization",
@@ -90,7 +94,8 @@
             }
           }
         ]
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "luckybaby",
     "experiments": {

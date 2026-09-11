@@ -104,7 +104,7 @@ export default function Account() {
               <AppleButton kind="continue" onPress={bind} disabled={busy} style={{ alignSelf: 'center' }} />
               {!emailMode ? (
                 <Pressable onPress={() => setEmailMode(true)} disabled={busy} style={{ marginTop: space.md, alignItems: 'center' }}>
-                  <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('用邮箱绑定（安卓也能用）')}</Caption>
+                  <Caption style={{ color: colors.pine, fontWeight: '700' }}>{tr('用邮箱绑定')}</Caption>
                 </Pressable>
               ) : (
                 <View style={{ marginTop: space.md }}>

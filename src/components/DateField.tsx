@@ -1,4 +1,4 @@
-// 日期选择：点一下展开系统滚轮（iOS）或弹出系统日期框（Android），不用手敲 YYYY-MM-DD
+// 日期选择：点一下展开系统滚轮（iOS）或弹出系统日期框（其他平台），不用手敲 YYYY-MM-DD
 import React, { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';

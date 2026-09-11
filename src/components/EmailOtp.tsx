@@ -5,7 +5,7 @@ import { colors, space } from '../theme';
 import { tr } from '../i18n';
 import { alert } from '../lib/alert';
 
-/** 邮箱链接：输入邮箱 → 去邮件里点链接 → 回到 App 自动完成。iOS 和安卓通用 */
+/** 邮箱链接：输入邮箱 → 去邮件里点链接 → 回到 App 自动完成。任何设备通用 */
 export function EmailOtp({ onSend, sendLabel }: { onSend: (email: string) => Promise<void>; sendLabel: string; doneLabel?: string; onVerify?: unknown }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -27,7 +27,7 @@ export function EmailOtp({ onSend, sendLabel }: { onSend: (email: string) => Pro
       )}
       {sent
         ? <Body2 style={{ marginTop: 8, color: colors.pine }}>{tr('已发送。在这台手机上打开邮件，点里面的链接，会自动回到 App 完成。')}</Body2>
-        : <Body2 style={{ marginTop: 6 }}>{tr('安卓和 iPhone 都能用邮箱。')}</Body2>}
+        : <Body2 style={{ marginTop: 6 }}>{tr('换手机或重装后，用同一个邮箱就能找回。')}</Body2>}
       {sent && <Caption style={{ marginTop: 4 }}>{tr('没收到？看看垃圾邮件；一小时内最多发 2 封。')}</Caption>}
     </View>
   );

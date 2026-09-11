@@ -64,7 +64,7 @@ export async function leaveFamily(memberId: string, role: string): Promise<void>
   try { await supabase.auth.signOut(); } catch {}
 }
 
-// ---------- 邮箱链接（iOS / 安卓通用；免费版 Supabase 不能发验证码，改为点链接） ----------
+// ---------- 邮箱链接（跨设备通用；免费版 Supabase 不能发验证码，改为点链接） ----------
 export const AUTH_REDIRECT = 'luckybaby://auth';
 
 /** 匿名账号绑定邮箱：发确认链接（匿名用户升级为正式用户，id 不变） */

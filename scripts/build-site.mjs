@@ -60,9 +60,10 @@ const strings = (name) => {
 const pick = (block, key) => block.match(new RegExp(key + ": '((?:[^'\\\\]|\\\\.)*)'"))[1].replace(/\\'/g, "'");
 const steps = (block) => [...block.match(/steps: \[([\s\S]*?)\]/)[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\'/g, "'"));
 const ZH = strings('ZH'), EN = strings('EN');
+const STORE = (join.match(/const APP_STORE_URL = '([^']*)'/) || [,''])[1];
 const T = {
-  zh: { title: '幸运宝贝 · 邀请你加入', intro: pick(ZH, 'intro'), copy: pick(ZH, 'copy'), open: pick(ZH, 'open'), beta: pick(ZH, 'beta'), copied: pick(ZH, 'copied'), steps: steps(ZH), invited: (m) => (m ? m + ' 邀请你' : '邀请你') + '一起记录孕期' },
-  en: { title: "LuckyBaby · You're invited", intro: pick(EN, 'intro'), copy: pick(EN, 'copy'), open: pick(EN, 'open'), beta: pick(EN, 'beta'), copied: pick(EN, 'copied'), steps: steps(EN), invited: (m) => (m ? `${m} invited you` : "You're invited") + ' to follow the pregnancy together' },
+  zh: { title: '幸运宝贝 · 邀请你加入', intro: pick(ZH, 'intro'), copy: pick(ZH, 'copy'), open: pick(ZH, 'open'), download: pick(ZH, 'download'), beta: pick(ZH, 'beta'), copied: pick(ZH, 'copied'), steps: steps(ZH), invited: (m) => (m ? m + ' 邀请你' : '邀请你') + '一起记录孕期' },
+  en: { title: "LuckyBaby · You're invited", intro: pick(EN, 'intro'), copy: pick(EN, 'copy'), open: pick(EN, 'open'), download: pick(EN, 'download'), beta: pick(EN, 'beta'), copied: pick(EN, 'copied'), steps: steps(EN), invited: (m) => (m ? `${m} invited you` : "You're invited") + ' to follow the pregnancy together' },
 };
 
 writeFileSync('site/join.html', `<!doctype html>
@@ -74,6 +75,7 @@ writeFileSync('site/join.html', `<!doctype html>
 <div class="code" id="code"></div>
 <a class="btn ghost" href="#" id="copy" onclick="cp();return false"></a>
 <a class="btn primary" id="open" href="#"></a>
+<a class="btn ghost" id="dl" href="${STORE}" hidden></a>
 <p class="tip" id="beta"></p>
 <ol class="tip" id="steps"></ol>
 <script>
@@ -92,7 +94,8 @@ document.getElementById('code').textContent=code||'——';
 document.getElementById('copy').textContent=L.copy;
 document.getElementById('open').textContent=L.open;
 document.getElementById('open').href='luckybaby://join?code='+code;
-document.getElementById('beta').textContent=L.beta;
+var STORE=${JSON.stringify(STORE)};
+if(STORE){document.getElementById('dl').textContent=L.download;document.getElementById('dl').hidden=false;document.getElementById('dl').onclick=cp;document.getElementById('beta').hidden=true;}else{document.getElementById('beta').textContent=L.beta;}
 document.getElementById('steps').innerHTML=L.steps.map(function(s){return '<li>'+s+'</li>'}).join('');
 function cp(){navigator.clipboard&&navigator.clipboard.writeText(code).then(function(){document.getElementById('copy').textContent=L.copied})}
 window.cp=cp;

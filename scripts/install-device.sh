@@ -16,7 +16,7 @@ fi
 BUNDLE_ID=com.luckyyoustudio.luckybaby
 # 直接用 xcodebuild：允许自动生成描述文件（expo run:ios 不会传这个参数）
 xcodebuild -workspace ios/app.xcworkspace -scheme app -configuration Release \
-  -destination "id=$DEVICE" -derivedDataPath ios/build -allowProvisioningUpdates build | grep -E "error:|warning: .*signing|BUILD|Signing Identity" || true
+  -destination "id=$DEVICE" -derivedDataPath ios/build -allowProvisioningUpdates -allowProvisioningDeviceRegistration build | grep -E "error:|warning: .*signing|BUILD|Signing Identity" || true
 APP=ios/build/Build/Products/Release-iphoneos/app.app
 [ -d "$APP" ] || { echo "编译失败，没有生成 $APP"; exit 1; }
 xcrun devicectl device install app --device "$DEVICE" "$APP"

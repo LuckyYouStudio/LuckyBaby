@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '../../src/store/store';
 import { Body2, Button, Caption, Field, Row, Screen } from '../../src/components/ui';
-import { colors, roleColor, space } from '../../src/theme';
+import { colors, roleColor, roleLabel, space } from '../../src/theme';
 import type { Role } from '../../src/data/types';
 import { uid } from '../../src/lib/pregnancy';
 import { tr } from '../../src/i18n';
@@ -32,7 +32,7 @@ export default function NewMember() {
         <Row style={{ gap: 8, marginBottom: space.lg }}>
           {(['dad', 'family'] as Role[]).map((r) => (
             <Pressable key={r} disabled={r === 'dad' && hasDad} onPress={() => { setRole(r); setRelation(r === 'dad' ? tr('老公') : ''); }} style={{ flex: 1, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: role === r ? roleColor[r].fg : colors.line, backgroundColor: role === r ? roleColor[r].bg : colors.card, opacity: r === 'dad' && hasDad ? 0.4 : 1 }}>
-              <Text style={{ fontWeight: '700', color: role === r ? roleColor[r].fg : colors.ink2, textAlign: 'center' }}>{roleColor[r].label}</Text>
+              <Text style={{ fontWeight: '700', color: role === r ? roleColor[r].fg : colors.ink2, textAlign: 'center' }}>{tr(roleLabel(r, state.pregnancy.stage))}</Text>
               <Caption style={{ textAlign: 'center', marginTop: 2 }}>{r === 'dad' ? tr('能记录、打卡、陪产检') : tr('看动态和产检日程')}</Caption>
             </Pressable>
           ))}

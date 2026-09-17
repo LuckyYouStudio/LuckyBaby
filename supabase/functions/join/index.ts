@@ -1,6 +1,6 @@
 // 邀请落地页：微信/短信里点开链接看到的页面。
 // 已装 App：按钮唤起 luckybaby://join?code=XXX 直接进家庭；没装：提示安装并把邀请码复制好。
-const APP_STORE_URL = ''; // 上架后填 App Store 链接
+const APP_STORE_URL = 'https://apps.apple.com/app/id6808961732';
 const SCHEME = 'luckybaby://join?code=';
 
 const EN = {

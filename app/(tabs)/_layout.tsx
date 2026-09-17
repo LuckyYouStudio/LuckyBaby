@@ -5,7 +5,7 @@ import { colors } from '../../src/theme';
 import { useStore } from '../../src/store/store';
 import { tr } from '../../src/i18n';
 
-const ICONS: Record<string, string> = { index: tr('今'), checkups: tr('检'), meds: tr('药'), life: tr('记'), family: tr('家') };
+const ICONS: Record<string, string> = { index: tr('今'), checkups: tr('检'), meds: tr('药'), life: tr('记'), family: tr('家'), calendar: tr('历') };
 
 function Icon({ name, focused }: { name: string; focused: boolean }) {
   return (
@@ -14,7 +14,8 @@ function Icon({ name, focused }: { name: string; focused: boolean }) {
 }
 
 export default function TabLayout() {
-  useStore(); // 主题切换时重渲染
+  const { state } = useStore(); // 主题切换时重渲染
+  const cyc = (state.pregnancy.stage ?? 'pregnant') === 'cycle';
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -29,8 +30,9 @@ export default function TabLayout() {
       })}
     >
       <Tabs.Screen name="index" options={{ title: tr('今天'), headerShown: false }} />
-      <Tabs.Screen name="checkups" options={{ title: tr('产检') }} />
-      <Tabs.Screen name="meds" options={{ title: tr('用药') }} />
+      <Tabs.Screen name="calendar" options={{ title: tr('日历'), href: cyc ? undefined : null }} />
+      <Tabs.Screen name="checkups" options={{ title: tr('产检'), href: cyc ? null : undefined }} />
+      <Tabs.Screen name="meds" options={{ title: tr('用药'), href: cyc ? null : undefined }} />
       <Tabs.Screen name="life" options={{ title: tr('记录') }} />
       <Tabs.Screen name="family" options={{ title: tr('家庭') }} />
     </Tabs>

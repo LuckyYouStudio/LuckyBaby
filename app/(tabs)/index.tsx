@@ -12,6 +12,8 @@ import { requestReminderPermission } from '../../src/lib/reminders';
 import { alert } from '../../src/lib/alert';
 import { Platform } from 'react-native';
 import { tr } from '../../src/i18n';
+import { TtcHome } from '../../src/components/TtcHome';
+import { CycleHome } from '../../src/components/CycleHome';
 
 // 在渲染时取色，深浅色切换才会跟着变
 const quickOptions = () => [
@@ -23,7 +25,9 @@ const quickOptions = () => [
 
 export default function Today() {
   const { state, dispatch } = useStore();
-  const { me, g, today, canSee, byId } = useDerived();
+  const { me, g, today, canSee, byId, stage } = useDerived();
+  const ttc = stage === 'ttc';
+  const cyc = stage === 'cycle';
   const insets = useSafeAreaInsets();
   const router = useRouter();
   if (!me) return null;
@@ -52,6 +56,7 @@ export default function Today() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: insets.top + 12, paddingBottom: 40 }}>
+        {ttc ? <TtcHome /> : cyc ? <CycleHome /> : <>
         <Row style={{ justifyContent: 'space-between', marginBottom: space.md }}>
           <View>
             <Caption>{me.role === 'mom' ? tr('你好，{name}', { name: me.name }) : tr('{mom} 的孕期 · 你是{role}', { mom: state.pregnancy.momName, role: tr(roleColor[me.role].label) })}</Caption>
@@ -67,7 +72,9 @@ export default function Today() {
         </View>
         <Row style={{ justifyContent: 'space-between', marginBottom: space.lg }}>
           <Caption>{tr(['孕早期', '孕中期', '孕晚期'][trimester(g.week) - 1])}</Caption>
-          <Caption>{tr('距预产期 {n} 天', { n: g.daysLeft })} · {fmtDate(state.pregnancy.dueDate)}</Caption>
+          <Pressable onPress={() => me.role !== 'family' && router.push('/pregnancy' as never)}>
+            <Caption style={me.role !== 'family' ? { color: colors.pine } : undefined}>{tr('距预产期 {n} 天', { n: g.daysLeft })} · {fmtDate(state.pregnancy.dueDate)}{me.role !== 'family' ? ' ›' : ''}</Caption>
+          </Pressable>
         </Row>
 
         {me.role === 'mom' && (
@@ -87,12 +94,12 @@ export default function Today() {
           </View>
         )}
 
-        {!state.remindersEnabled && me.role !== 'family' && Platform.OS !== 'web' && (
+        {!state.remindersEnabled && me.role !== 'family' && Platform.OS !== 'web' && (me.role === 'mom' || !cyc) && (
           <Card style={{ marginBottom: space.lg, backgroundColor: colors.apricotSoft, borderColor: colors.apricotSoft }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <View style={{ flex: 1, marginRight: 8 }}>
-                <Body style={{ fontWeight: '700', color: colors.ink }}>{tr('让手机提醒，不用记')}</Body>
-                <Caption>{tr('产检前一晚说要不要空腹、带什么；补充剂到点提醒。')}</Caption>
+                <Body style={{ fontWeight: '700', color: colors.ink }}>{ttc ? tr('易孕期到了提醒你们') : cyc ? tr('月经快来了提醒你') : tr('让手机提醒，不用记')}</Body>
+                <Caption>{ttc ? tr('易孕期开始、最佳时机当天、月经该来那天，两个人的手机都会提醒。') : cyc ? tr('预计来的前一天晚上提醒你带好东西，当天再提醒记一下。') : tr('产检前一晚说要不要空腹、带什么；补充剂到点提醒。')}</Caption>
               </View>
               <Button title={tr("开启")} small onPress={enableReminders} />
             </Row>
@@ -106,8 +113,9 @@ export default function Today() {
             {baby.length} · {tr(baby.note)}
           </Body2>
         </Card>
+        </>}
 
-        {me.role !== 'family' && <Section title={tr("今天要吃")} right={<Pressable onPress={() => router.push('/meds')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
+        {me.role !== 'family' && !cyc && <Section title={tr("今天要吃")} right={<Pressable onPress={() => router.push('/meds')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           {dueSupplements.length === 0 ? (
             <Body2>{tr('本周没有需要吃的补充剂。')}</Body2>
           ) : (
@@ -138,9 +146,9 @@ export default function Today() {
           {me.role === 'dad' && <Caption style={{ marginTop: 6 }}>{tr('你也可以替她打卡，动态里会显示是你记的。')}</Caption>}
         </Section>}
 
-        <Section title={tr("接下来的产检")} right={<Pressable onPress={() => router.push('/checkups')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
+        {!cyc && <Section title={ttc ? tr("孕前检查") : tr("接下来的产检")} right={<Pressable onPress={() => router.push('/checkups')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           {upcoming.length === 0 ? (
-            <Body2>{tr('近期没有安排的产检。')}</Body2>
+            <Body2>{ttc ? tr('孕前检查建议夫妻一起做一次，在「产检」页可以约时间。') : tr('近期没有安排的产检。')}</Body2>
           ) : (
             upcoming.map((c) => {
               const comp = c.companionId ? byId(c.companionId) : undefined;
@@ -168,9 +176,9 @@ export default function Today() {
               );
             })
           )}
-        </Section>
+        </Section>}
 
-        <Section title={tr("家里的动态")} right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
+        <Section title={cyc && state.members.length <= 1 ? tr("我的动态") : tr("家里的动态")} right={<Pressable onPress={() => router.push('/family')}><Caption style={{ color: colors.pine }}>{tr('全部')}</Caption></Pressable>}>
           <Feed limit={3} />
         </Section>
 

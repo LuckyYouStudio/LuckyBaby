@@ -1,7 +1,7 @@
 // 云同步：本地 reducer 仍是设备上的事实来源；这里负责把差异推到 Supabase，
 // 并在别的家人改动时拉回来合并。
 import { supabase } from '../lib/supabase';
-import type { Activity, AppState, Checkup, DailyLog, Member, Pregnancy, Role, Supplement, SupplementLog } from '../data/types';
+import type { Activity, AppState, Checkup, CycleLog, DailyLog, Member, Pregnancy, Role, Supplement, SupplementLog } from '../data/types';
 import { tr } from '../i18n';
 
 export interface CloudInfo { familyId: string; userId: string; bound?: boolean }
@@ -39,12 +39,20 @@ const toActivity = (r: Row, comments: Row[]): Activity => ({
   comments: comments.filter((c) => c.activity_id === r.id).map((c) => ({ id: c.id as string, byId: c.by_id as string, text: c.text as string, at: c.at as string })).sort((a, b) => (a.at < b.at ? -1 : 1)),
 });
 const fromActivity = (a: Activity, fid: string): Row => ({ id: a.id, family_id: fid, by_id: a.byId, kind: a.kind, text: a.text, ref_id: a.refId ?? null, visibility: a.visibility, likes: a.likes, at: a.at });
-const toPregnancy = (f: Row): Pregnancy => ({ dueDate: f.due_date as string, lmp: (f.lmp as string) ?? undefined, momName: f.mom_name as string, babyNickname: (f.baby_nickname as string) ?? undefined });
+const toPregnancy = (f: Row): Pregnancy => ({
+  stage: (f.stage as Pregnancy['stage']) ?? 'pregnant', dueDate: (f.due_date as string) ?? '', lmp: (f.lmp as string) ?? undefined, momName: f.mom_name as string, babyNickname: (f.baby_nickname as string) ?? undefined,
+  cycleLen: (f.cycle_len as number) ?? undefined, periodLen: (f.period_len as number) ?? undefined,
+});
+/** 比较家庭信息是否有变化时用的规范形式（老数据没有 stage/cycleLen 字段） */
+export const canonPregnancy = (p: Pregnancy) => JSON.stringify({ stage: p.stage ?? 'pregnant', dueDate: p.dueDate || '', lmp: p.lmp ?? null, momName: p.momName, babyNickname: p.babyNickname ?? null, cycleLen: p.cycleLen ?? 28, periodLen: p.periodLen ?? 5 });
+const fromPregnancy = (p: Pregnancy): Row => ({ stage: p.stage ?? 'pregnant', due_date: p.dueDate || null, lmp: p.lmp ?? null, baby_nickname: p.babyNickname ?? null, cycle_len: p.cycleLen ?? 28, period_len: p.periodLen ?? 5 });
+const toCycleLog = (r: Row): CycleLog => ({ id: r.id as string, kind: r.kind as CycleLog['kind'], date: r.date as string, value: r.value == null ? undefined : Number(r.value), text: (r.text as string) ?? undefined, byId: r.by_id as string, at: r.at as string });
+const fromCycleLog = (l: CycleLog, fid: string): Row => ({ id: l.id, family_id: fid, kind: l.kind, date: l.date, value: l.value ?? null, text: l.text ?? null, by_id: l.byId, at: l.at });
 
 // ---------- RPC ----------
 export async function createFamilyRemote(p: Pregnancy, memberId: string) {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai';
-  const { data, error } = await supabase!.rpc('create_family', { p_due_date: p.dueDate, p_lmp: p.lmp ?? null, p_mom_name: p.momName, p_baby_nickname: p.babyNickname ?? null, p_member_id: memberId, p_tz: tz });
+  const { data, error } = await supabase!.rpc('create_family', { p_due_date: p.dueDate || null, p_lmp: p.lmp ?? null, p_mom_name: p.momName, p_baby_nickname: p.babyNickname ?? null, p_member_id: memberId, p_tz: tz, p_stage: p.stage ?? 'pregnant', p_cycle_len: p.cycleLen ?? 28, p_period_len: p.periodLen ?? 5 });
   if (error) throw error;
   return data as { family_id: string; invite_code: string; member_id: string };
 }
@@ -71,22 +79,24 @@ function friendly(msg: string): string {
 }
 
 // ---------- 拉取 ----------
-export type RemoteSlices = Pick<AppState, 'members' | 'checkups' | 'supplements' | 'supplementLogs' | 'logs' | 'activities'>;
+export type RemoteSlices = Pick<AppState, 'members' | 'checkups' | 'supplements' | 'supplementLogs' | 'logs' | 'activities'> & { cycleLogs: CycleLog[]; pregnancy?: Pregnancy };
 
 export async function pullAll(fid: string): Promise<RemoteSlices> {
   const sb = supabase!;
   const q = (t: string) => sb.from(t).select('*').eq('family_id', fid);
-  const [m, c, s, sl, l, a] = await Promise.all([q('members'), q('checkups'), q('supplements'), q('supplement_logs'), q('daily_logs'), q('activities')]);
-  const firstErr = [m, c, s, sl, l, a].find((r) => r.error)?.error;
+  const [m, c, s, sl, l, a, cy, f] = await Promise.all([q('members'), q('checkups'), q('supplements'), q('supplement_logs'), q('daily_logs'), q('activities'), q('cycle_logs'), sb.from('families').select('*').eq('id', fid).maybeSingle()]);
+  const firstErr = [m, c, s, sl, l, a, cy].find((r) => r.error)?.error;
   if (firstErr) throw firstErr;
   const actRows = (a.data ?? []) as Row[];
   const cm = actRows.length ? await sb.from('comments').select('*').in('activity_id', actRows.map((r) => r.id as string)) : { data: [] as Row[] };
   return {
+    ...(f.data ? { pregnancy: toPregnancy(f.data as Row) } : {}),
     members: ((m.data ?? []) as Row[]).map(toMember),
     checkups: ((c.data ?? []) as Row[]).map(toCheckup),
     supplements: ((s.data ?? []) as Row[]).map(toSupplement),
     supplementLogs: ((sl.data ?? []) as Row[]).map(toSupLog),
     logs: ((l.data ?? []) as Row[]).map(toLog),
+    cycleLogs: ((cy.data ?? []) as Row[]).map(toCycleLog),
     activities: actRows.map((r) => toActivity(r, (cm.data ?? []) as Row[])).sort((x, y) => (x.at < y.at ? 1 : -1)),
   };
 }
@@ -115,6 +125,12 @@ export async function pushDiff(prev: AppState, next: AppState, fid: string) {
   await diffTable('supplements', prev.supplements, next.supplements, (s) => fromSupplement(s, fid));
   await diffTable('supplement_logs', prev.supplementLogs, next.supplementLogs, (l) => fromSupLog(l, fid));
   await diffTable('daily_logs', prev.logs, next.logs, (l) => fromLog(l, fid));
+  await diffTable('cycle_logs', prev.cycleLogs ?? [], next.cycleLogs ?? [], (l) => fromCycleLog(l, fid));
+  // 家庭信息（阶段/预产期/周期长度）
+  if (canonPregnancy(prev.pregnancy) !== canonPregnancy(next.pregnancy) && next.pregnancy.momName) {
+    const { error } = await supabase!.from('families').update(fromPregnancy(next.pregnancy)).eq('id', fid);
+    if (error) throw new Error(`families 写入失败：${error.message}`);
+  }
   // 动态本体（不含评论）
   const strip = (a: Activity) => ({ ...a, comments: [] });
   await diffTable('activities', prev.activities.map(strip), next.activities.map(strip), (a) => fromActivity(a, fid));
@@ -145,9 +161,10 @@ export async function reportClientError(fid: string, memberId: string, message: 
 // ---------- 实时 ----------
 export function subscribe(fid: string, onChange: () => void) {
   const ch = supabase!.channel(`family:${fid}`);
-  for (const t of ['members', 'checkups', 'supplements', 'supplement_logs', 'daily_logs', 'activities']) {
+  for (const t of ['members', 'checkups', 'supplements', 'supplement_logs', 'daily_logs', 'activities', 'cycle_logs']) {
     ch.on('postgres_changes', { event: '*', schema: 'public', table: t, filter: `family_id=eq.${fid}` }, onChange);
   }
+  ch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'families', filter: `id=eq.${fid}` }, onChange);
   ch.on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, onChange);
   ch.subscribe();
   return () => { supabase!.removeChannel(ch); };

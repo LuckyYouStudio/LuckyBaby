@@ -48,13 +48,23 @@ export async function bindApple(): Promise<string> {
 /** 删除账号：清云端数据 + 删除登录账号 */
 export async function deleteAccount(): Promise<void> {
   if (!supabase) return;
+  // 示例家庭 / 纯本地模式下可能没有云端会话，此时只需调用方清本地，不该抛错
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess.session) return;
   const { data, error } = await supabase.functions.invoke('delete-account');
   if (error) throw error;
   if (data && (data as any).error) throw new Error((data as any).error);
   await supabase.auth.signOut();
 }
 
-// ---------- 邮箱链接（iOS / 安卓通用；免费版 Supabase 不能发验证码，改为点链接） ----------
+/** 离开当前家庭：家人删掉自己的成员行（准妈妈只清本机，云端家庭保留）；然后退出登录，下次建/加家庭用新身份 */
+export async function leaveFamily(memberId: string, role: string): Promise<void> {
+  if (!supabase) return;
+  try { if (role !== 'mom') await supabase.from('members').delete().eq('id', memberId); } catch {}
+  try { await supabase.auth.signOut(); } catch {}
+}
+
+// ---------- 邮箱链接（跨设备通用；免费版 Supabase 不能发验证码，改为点链接） ----------
 export const AUTH_REDIRECT = 'luckybaby://auth';
 
 /** 匿名账号绑定邮箱：发确认链接（匿名用户升级为正式用户，id 不变） */

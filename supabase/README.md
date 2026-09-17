@@ -19,6 +19,12 @@
 - 家庭时区 `families.tz` 由建家庭的手机上报。
 - **邀请落地页** Edge Function `join`：`/functions/v1/join?code=XXXXXX&from=名字`，纯 HTML，无需登录；二维码和分享链接都指向它。已装 App 的人点“打开 App 加入”走 `luckybaby://join?code=`。上架后填 `APP_STORE_URL` 重新部署：`supabase functions deploy join --no-verify-jwt`。
 
+## 备孕模块（2026-09-05）
+
+- `families` 加 `stage / cycle_len / period_len`，`due_date` 可空；新表 `cycle_logs`（RLS：仅 mom/dad）；两表都加进 realtime publication；准父母可 update families。
+- `create_family` 改为 9 参数版（后 3 个有默认值，老客户端仍可调用）；旧的 5 参数重载已删。
+- 以上已通过 `supabase db query --linked --file` 执行到线上。
+
 ## 一次性准备（需要你的 Supabase 账号）
 
 1. 登录 CLI（会打开浏览器）：

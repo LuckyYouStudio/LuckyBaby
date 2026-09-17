@@ -16,10 +16,11 @@ ol{padding-left:20px;color:#4B5750}</style></head><body><div class="wrap">
 <div class="code" id="code"></div>
 <a class="btn ghost" href="#" id="copy" onclick="cp();return false"></a>
 <a class="btn primary" id="open" href="#"></a>
+<a class="btn ghost" id="dl" href="https://apps.apple.com/app/id6808961732" hidden></a>
 <p class="tip" id="beta"></p>
 <ol class="tip" id="steps"></ol>
 <script>
-var T={"zh":{"title":"幸运宝贝 · 邀请你加入","intro":"「幸运宝贝」是一家人共用的孕期记录本：产检、吃药、心情，家人都能看到、一起参与。不做社区，不做广告。","copy":"复制邀请码","open":"已安装，打开 App 加入","beta":"App 正在内测，还没上架。请让邀请你的人帮你安装，装好后在首页选「我有邀请码」，输入上面的 6 位码。","copied":"已复制","steps":["打开幸运宝贝","首页选「我有邀请码」","输入或粘贴邀请码，选你的身份"]},"en":{"title":"LuckyBaby · You're invited","intro":"LuckyBaby is a pregnancy journal shared by the whole family: checkups, supplements, moods. No community, no ads.","copy":"Copy invite code","open":"Installed? Open the app to join","beta":"The app is in private testing and not in the App Store yet. Ask the person who invited you to install it, then choose \"I have an invite code\" and enter the 6-character code above.","copied":"Copied","steps":["Open LuckyBaby","Choose \"I have an invite code\"","Type or paste the code and pick your role"]}};
+var T={"zh":{"title":"幸运宝贝 · 邀请你加入","intro":"「幸运宝贝」是一家人共用的孕期记录本：产检、吃药、心情，家人都能看到、一起参与。不做社区，不做广告。","copy":"复制邀请码","open":"已安装，打开 App 加入","download":"还没安装，去下载","beta":"App 正在内测，还没上架。请让邀请你的人帮你安装，装好后在首页选「我有邀请码」，输入上面的 6 位码。","copied":"已复制","steps":["打开幸运宝贝","首页选「我有邀请码」","输入或粘贴邀请码，选你的身份"]},"en":{"title":"LuckyBaby · You're invited","intro":"LuckyBaby is a pregnancy journal shared by the whole family: checkups, supplements, moods. No community, no ads.","copy":"Copy invite code","open":"Installed? Open the app to join","download":"Not installed? Download","beta":"The app is in private testing and not in the App Store yet. Ask the person who invited you to install it, then choose \"I have an invite code\" and enter the 6-character code above.","copied":"Copied","steps":["Open LuckyBaby","Choose \"I have an invite code\"","Type or paste the code and pick your role"]}};
 var p=new URLSearchParams(location.search);
 var code=(p.get('code')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
 var from=(p.get('from')||'').slice(0,20);
@@ -34,7 +35,8 @@ document.getElementById('code').textContent=code||'——';
 document.getElementById('copy').textContent=L.copy;
 document.getElementById('open').textContent=L.open;
 document.getElementById('open').href='luckybaby://join?code='+code;
-document.getElementById('beta').textContent=L.beta;
+var STORE="https://apps.apple.com/app/id6808961732";
+if(STORE){document.getElementById('dl').textContent=L.download;document.getElementById('dl').hidden=false;document.getElementById('dl').onclick=cp;document.getElementById('beta').hidden=true;}else{document.getElementById('beta').textContent=L.beta;}
 document.getElementById('steps').innerHTML=L.steps.map(function(s){return '<li>'+s+'</li>'}).join('');
 function cp(){navigator.clipboard&&navigator.clipboard.writeText(code).then(function(){document.getElementById('copy').textContent=L.copied})}
 window.cp=cp;

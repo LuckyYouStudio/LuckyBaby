@@ -252,4 +252,5 @@ export const en: Record<string, string> = {
   '已绑定登录方式 · 也可以在这里删除账号': 'Sign-in method linked · delete your account here',
   '绑定登录方式换手机不丢 · 也可以在这里删除账号': 'Add a sign-in method so nothing is lost · delete your account here',
   '换了手机？用原来的方式恢复这个家庭': 'New phone? Restore this family the way you set it up', '用邮箱链接恢复': 'Restore with an email link',
+  '{name}还没打卡': '{name} not checked in yet', '吃了就点一下，没吃现在补上。': 'Tap if you took it, or take it now.', '今天的{name}还没记': "Today's {name} still not logged", '睡前补一下，别断了。': 'Take it before bed so you don\'t miss a day.',
 };

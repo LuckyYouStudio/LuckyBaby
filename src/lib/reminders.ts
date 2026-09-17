@@ -101,13 +101,29 @@ export async function rescheduleReminders(state: AppState) {
         });
       }
     } else {
-      // 准妈妈：到点提醒吃
+      // 准妈妈：到点提醒吃；没打卡的话过 2 小时再提一次，晚上 20:30 再兜底一次。
+      // 打卡后 store 会重排提醒（reminderKey 含今天的打卡），这些补提醒就随之取消。
+      const at = (h: number, m: number) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+      const clamp = (d: Date) => { const lo = at(8, 0), hi = at(21, 30); return d < lo ? lo : d > hi ? hi : d; };
       for (const s of due) {
         const [hh, mm] = (s.timeOfDay || '08:00').split(':').map(Number);
+        const name = tr(s.name);
         await Notifications.scheduleNotificationAsync({
-          content: { title: tr('该吃{name}了', { name: tr(s.name) }), body: `${tr(s.dose)}${s.note ? ' · ' + tr(s.note) : ''}`, data: { supplementId: s.id } },
+          content: { title: tr('该吃{name}了', { name }), body: `${tr(s.dose)}${s.note ? ' · ' + tr(s.note) : ''}`, data: { supplementId: s.id } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh || 8, minute: mm || 0 },
         });
+        const logged = state.supplementLogs.some((l) => l.supplementId === s.id && l.date === t);
+        if (logged) continue;
+        const followUps = [
+          { when: clamp(at((hh || 8) + 2, mm || 0)), title: tr('{name}还没打卡', { name }), body: tr('吃了就点一下，没吃现在补上。') },
+          { when: at(20, 30), title: tr('今天的{name}还没记', { name }), body: tr('睡前补一下，别断了。') },
+        ];
+        let last = 0;
+        for (const f of followUps) {
+          if (f.when <= now || f.when.getTime() - last < 30 * 60_000) continue;
+          last = f.when.getTime();
+          await Notifications.scheduleNotificationAsync({ content: { title: f.title, body: f.body, data: { supplementId: s.id, followUp: true } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: f.when } });
+        }
       }
     }
     const pending = await Notifications.getAllScheduledNotificationsAsync();
